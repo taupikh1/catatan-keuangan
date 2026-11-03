@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Buku Kas V37</title>
+<title>Buku Kas</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Buku Kas">
@@ -361,6 +361,13 @@
   .bal-svg .pt{fill:var(--card); stroke:var(--ink); stroke-width:2;}
   .bal-svg .pt.sel{fill:var(--ink);}
   .bal-svg text{fill:var(--muted); font-size:9.5px;}
+  /* V38b: judul lipatan lebih jelas, tombol edit/hapus lebih lega */
+  details.fold summary{font-size:15px; font-weight:600; color:var(--ink); padding:2px 0;}
+  details.fold summary::after{color:var(--muted); font-weight:400;}
+  .entry{gap:6px;}
+  .entry .edit,.entry .del{min-width:40px; min-height:40px; justify-content:center; opacity:1; padding:6px;}
+  .entry .edit{color:var(--muted);}
+  .page{padding-bottom:132px;}
 </style>
 </head>
 <body>
@@ -390,7 +397,7 @@
     <button class="tab active" data-view="ringkasan">Ringkasan</button>
     <button class="tab" data-view="transaksi">Transaksi</button>
     <button class="tab" data-view="anggaran">Anggaran</button>
-    <button class="tab" data-view="lainnya">Lainnya</button>
+    <button class="tab" data-view="lainnya">Pengaturan</button>
   </div>
 
   <div class="month-nav" id="monthNavRow">
@@ -520,6 +527,13 @@
       </div>
     </form>
 
+    <details class="card fold">
+      <summary>Riwayat pindah saldo</summary>
+      <p class="hint-text">Termasuk alokasi gaji. Tidak dihitung sebagai pemasukan atau pengeluaran. Untuk membuat yang baru, ketuk ⇄ Pindah saldo di bagian atas.</p>
+      <ul class="ledger" id="transferList"></ul>
+      <div class="empty" id="transferEmpty" style="display:none; padding:10px 0;">Belum ada pindah saldo.</div>
+    </details>
+
     <div class="seg" id="txSeg" style="margin-top:4px;"><button type="button" data-f="all" class="active">Semua</button><button type="button" data-f="masuk">Masuk</button><button type="button" data-f="keluar">Keluar</button></div>
     <div class="search-row search-wrap">
       <input type="text" id="txSearch" placeholder="Cari transaksi — nama, kategori, atau akun (semua periode)">
@@ -624,13 +638,6 @@
   </div>
 
   <div class="view" id="view-lainnya">
-    <div class="card">
-      <h3>Pindah saldo antar akun</h3>
-      <p class="hint-text">Riwayat pindah saldo, termasuk alokasi gaji. Tidak dihitung sebagai pemasukan atau pengeluaran.</p>
-      <button type="button" class="submit outline" id="openTransferBtn2" style="margin-bottom:10px;">⇄ Pindah saldo baru</button>
-      <ul class="ledger" id="transferList"></ul>
-      <div class="empty" id="transferEmpty" style="display:none; padding:10px 0;">Belum ada pindah saldo.</div>
-    </div>
     <details class="card fold">
       <summary>Periode bulan</summary>
       <p class="hint-text">Satu "bulan" dihitung dari tanggal ini sampai sehari sebelum tanggal yang sama bulan berikutnya, dan dinamai sesuai bulan akhirnya. Contoh mulai tgl 28: 28 Sep – 27 Okt = Oktober.</p>
@@ -691,7 +698,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <script>
-/* Buku Kas V37 - tampilan minimalis. V37: data yang dihapus nggak hidup lagi dari cloud (simpan tanpa merge), konfirmasi ganti nama akun, peringatan saldo minus di semua pengeluaran (baru & edit). V36: peringatan ukuran data (batas dokumen cloud), peringatan saldo minus saat pindah saldo, setoran bulanan yang dibutuhkan untuk target tabungan, grafik saldo dari waktu ke waktu, urutkan catatan berdasarkan nominal terbesar/terkecil. V35: perubahan saat offline ikut terlindungi dari timpaan cloud, konfirmasi hapus gaji/alokasi, semua konfirmasi pakai dialog aplikasi, pindah saldo bisa diedit. V34: pencarian di Ringkasan (sama seperti tab Transaksi) + tombol ✕ hapus tulisan di kolom cari. V33: sinkron cloud tidak menimpa perubahan yang belum terkirim, 5 cadangan lokal, filter periode saat mencari, kategori tersembunyi bisa ditampilkan, Lihat semua riwayat pindah saldo. Dasar: V28. Baru: menu Tabungan di tab Anggaran (tiap tabungan = akun, di atas Dana Pribadi), tombol Lupa kata sandi di form login. */
+/* Buku Kas - tampilan minimalis. V37: data yang dihapus nggak hidup lagi dari cloud (simpan tanpa merge), konfirmasi ganti nama akun, peringatan saldo minus di semua pengeluaran (baru & edit). V36: peringatan ukuran data (batas dokumen cloud), peringatan saldo minus saat pindah saldo, setoran bulanan yang dibutuhkan untuk target tabungan, grafik saldo dari waktu ke waktu, urutkan catatan berdasarkan nominal terbesar/terkecil. V35: perubahan saat offline ikut terlindungi dari timpaan cloud, konfirmasi hapus gaji/alokasi, semua konfirmasi pakai dialog aplikasi, pindah saldo bisa diedit. V34: pencarian di Ringkasan (sama seperti tab Transaksi) + tombol ✕ hapus tulisan di kolom cari. V33: sinkron cloud tidak menimpa perubahan yang belum terkirim, 5 cadangan lokal, filter periode saat mencari, kategori tersembunyi bisa ditampilkan, Lihat semua riwayat pindah saldo. Dasar: V28. Baru: menu Tabungan di tab Anggaran (tiap tabungan = akun, di atas Dana Pribadi), tombol Lupa kata sandi di form login. */
 const DEFAULT_ACCOUNTS = ['Dana Darurat','Uang Tabungan','Uang Belanja','Dana Pribadi'];
 const DEFAULT_CATEGORIES = ['Gaji','Kontrakan','Internet','Makan','Transport','Belanja','Tagihan','Hiburan','Kesehatan','Pendidikan','Lainnya'];
 const RENAME_MAP = {
@@ -1677,7 +1684,7 @@ function renderRingkasan(){
   $('yearEmpty').style.display = monthEntries.length ? 'none' : 'block';
   const maxAbs = Math.max(1,...monthEntries.map(([,v])=>Math.max(v.i,v.o)));
   $('yearMonthBars').innerHTML = monthEntries.map(([m,v])=>`<div class="cat-bar-row">
-      <div class="cat-bar-top"><span class="name">${MONTH_SHORT[Number(m)-1]}</span><span class="val">${fmt(v.i-v.o)}</span></div>
+      <div class="cat-bar-top"><span class="name">${MONTH_SHORT[Number(m)-1]}</span><span class="val">Selisih ${v.i-v.o<0?'−':'+'}${fmt(Math.abs(v.i-v.o))}</span></div>
       <div class="ybar"><div class="track"><div style="width:${v.i/maxAbs*100}%;background:var(--income)"></div></div></div>
       <div class="ybar"><div class="track"><div style="width:${v.o/maxAbs*100}%;background:var(--expense)"></div></div></div>
     </div>`).join('');
@@ -1940,7 +1947,6 @@ $('transferForm').addEventListener('submit', async e=>{
   $('trAmt').value=''; $('trNote').value='';
   showStatus(`${fmt(amount)} dipindah ke ${to}.`);
 });
-$('openTransferBtn2').addEventListener('click', openTransfer);
 function transferPairs(){
   const legs = transactions.filter(isTransfer).sort((a,b)=>a.id-b.id);
   const groups = new Map(), loose=[];
@@ -2014,7 +2020,7 @@ function startEditTx(id){
     return false;
   }
   if(tx.transferId){
-    showStatus('Pindah saldo diedit dari daftar Pindah saldo di tab Lainnya.', true);
+    showStatus('Pindah saldo diedit dari Riwayat pindah saldo di tab Transaksi.', true);
     return false;
   }
   editingId = id;
@@ -2653,6 +2659,7 @@ function renderBalanceChart(){
     balSelYm = pts[best].ym;
     renderBalanceChart();
   });
+  if(pts.length<2) $('balChart').innerHTML = `<div class="budget-sub" style="padding:4px 0 2px;">Grafik garis muncul setelah ada data 2 bulan. Saat ini baru ${pts.length} bulan.</div>`;
 
   const cur = pts[selIdx], prev = pts[selIdx-1];
   let delta = '';
