@@ -589,7 +589,31 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
 .hdr-btn[aria-pressed="true"]{background:rgba(var(--ar),.18); color:var(--as);}
 .hdr-btn.spin svg{animation:hdrSpin .8s linear infinite;}
 @keyframes hdrSpin{to{transform:rotate(360deg)}}
-body.hide-money .balance,body.hide-money .acc-chip input.bal-input{filter:blur(9px); pointer-events:none; -webkit-user-select:none; user-select:none;}
+body.hide-money .balance,body.hide-money .acc-chip input.bal-input,body.hide-saldo .balance,body.hide-saldo .acc-chip input.bal-input{filter:blur(9px); pointer-events:none; -webkit-user-select:none; user-select:none;}
+/* Header atas (tanggal, sapaan, tombol) menempel di atas saat scroll */
+.hdr{position:sticky; top:0; z-index:30; margin:-22px -16px 10px; padding:calc(14px + env(safe-area-inset-top,0px)) 16px 10px; background:var(--bg); background:color-mix(in srgb,var(--bg) 78%,transparent); -webkit-backdrop-filter:blur(16px) saturate(1.3); backdrop-filter:blur(16px) saturate(1.3); border-bottom:1px solid transparent; transition:border-color .2s, box-shadow .2s;}
+.hdr.is-stuck{border-bottom-color:var(--line); box-shadow:0 8px 22px -12px var(--shadow);}
+/* Total saldo + akun bisa dilipat (panah ▾) */
+.mast-toggle{display:flex; align-items:center; justify-content:center; gap:6px; width:100%; background:none; border:none; font-family:inherit; color:var(--muted); padding:6px 0 4px; cursor:pointer; -webkit-tap-highlight-color:transparent;}
+.mast-arrow{font-size:13px; letter-spacing:0; transition:transform .25s;}
+.masthead.collapsed .mast-arrow{transform:rotate(-90deg);}
+.mast-body{display:grid; grid-template-rows:1fr; transition:grid-template-rows .28s ease, opacity .2s;}
+.mast-inner{min-height:0; overflow:hidden;}
+.masthead.collapsed .mast-body{grid-template-rows:0fr; opacity:0; visibility:hidden; transition:grid-template-rows .28s ease, opacity .2s, visibility 0s .28s;}
+/* Menu sembunyikan saldo */
+.hide-menu{position:absolute; right:16px; top:calc(100% - 4px); width:min(268px,calc(100vw - 32px)); background:var(--sheet); color:var(--ink); border:1px solid var(--line); border-radius:18px; padding:6px; box-shadow:0 16px 40px var(--shadow); z-index:5; animation:hmIn .16s ease-out;}
+.hide-menu[hidden]{display:none;}
+@keyframes hmIn{from{opacity:0; transform:translateY(-6px) scale(.97);}to{opacity:1; transform:none;}}
+.hm-item{display:grid; grid-template-columns:1fr auto; grid-template-areas:"t ck" "s ck"; align-items:center; column-gap:10px; width:100%; text-align:left; background:none; border:none; color:inherit; font:inherit; padding:11px 12px; border-radius:12px; cursor:pointer; -webkit-tap-highlight-color:transparent;}
+.hm-item:active{background:rgba(var(--w),.08);}
+.hm-t{grid-area:t; font-size:13.5px; font-weight:700;}
+.hm-s{grid-area:s; font-size:11.5px; color:var(--muted); margin-top:2px;}
+.hm-ck{grid-area:ck; width:22px; height:22px; border-radius:50%; display:none; place-items:center; font-size:12px; font-weight:800; background:rgba(var(--ar),.2); color:var(--as);}
+.hm-item.on{background:rgba(var(--ar),.1);}
+.hm-item.on .hm-ck{display:grid;}
+.hm-off{grid-template-columns:1fr; grid-template-areas:"t"; border-top:1px solid var(--line); border-radius:0 0 12px 12px; margin-top:4px; padding-top:13px;}
+.hm-off .hm-t{color:var(--as);}
+.hm-off[hidden]{display:none;}
 #nickIn{width:100%;}
 #profileSheet{padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px)); color:var(--ink);}
 .pf-top{display:flex; align-items:center; gap:14px; margin-bottom:4px;}
@@ -602,7 +626,7 @@ body.hide-money .balance,body.hide-money .acc-chip input.bal-input{filter:blur(9
 .pf-stats b{display:block; font-size:16px; font-weight:800; white-space:nowrap;}
 .pf-stats span{font-size:11px; color:var(--muted);}
 @supports (-webkit-touch-callout:none){ input,select,textarea{font-size:16px!important;} }
-.page{padding-top:calc(22px + env(safe-area-inset-top,0px));}
+.page{padding-top:22px;}  /* safe-area atas sekarang ditangani header sticky */
 body.hide-money .amount,body.hide-money .month-stats b,body.hide-money .r-extra b,body.hide-money .pie-legend .val,body.hide-money .pie-center b,body.hide-money .day-head span:last-child,body.hide-money .money{filter:blur(8px); -webkit-user-select:none; user-select:none;}
 </style>
 </head>
@@ -621,23 +645,31 @@ body.hide-money .amount,body.hide-money .month-stats b,body.hide-money .r-extra 
 
 <div class="page">
 
-  <div class="masthead">
-    <button type="button" id="themeBtn" class="theme-btn" aria-label="Ganti mode gelap atau terang"></button>
-    <div class="hdr">
+  <div class="hdr">
       <div class="hdr-txt">
         <div class="hdr-date" id="hdrDate"></div>
-        <div class="hdr-hi" id="hdrHi">Halo 👋</div>
+        <div class="hdr-hi" id="hdrHi">Selamat Datang</div>
       </div>
       <div class="hdr-btns">
         <button type="button" id="refreshBtn" class="hdr-btn" aria-label="Segarkan data" title="Segarkan data"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></button>
-        <button type="button" id="hideBalBtn" class="hdr-btn" aria-label="Sembunyikan saldo" aria-pressed="false" title="Sembunyikan saldo"></button>
+        <button type="button" id="hideBalBtn" class="hdr-btn" aria-label="Sembunyikan saldo" aria-pressed="false" aria-haspopup="menu" aria-expanded="false" title="Sembunyikan saldo"></button>
         <button type="button" id="profileBtn" class="hdr-btn" aria-label="Profil" title="Profil"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
       </div>
+    <div class="hide-menu" id="hideMenu" role="menu" hidden>
+      <button type="button" role="menuitem" class="hm-item" data-mode="saldo"><span class="hm-t">Blur total saldo &amp; saldo akun</span><span class="hm-s">Hanya angka di bagian atas</span><span class="hm-ck">✓</span></button>
+      <button type="button" role="menuitem" class="hm-item" data-mode="all"><span class="hm-t">Blur semua</span><span class="hm-s">Saldo, transaksi, dan ringkasan</span><span class="hm-ck">✓</span></button>
+      <button type="button" role="menuitem" class="hm-item hm-off" data-mode="off" hidden><span class="hm-t">Tampilkan lagi</span></button>
     </div>
-    <div class="label">Total saldo</div>
-    <div class="balance" id="totalBalance">Rp 0</div>
-    <div class="accounts-row" id="accountsRow" title="Ketuk saldo untuk koreksi, ketuk nama untuk ganti nama"></div>
-    <button type="button" id="openTransferBtn" class="link-btn">⇄ Pindah saldo</button>
+  </div>
+
+  <div class="masthead">
+    <button type="button" id="themeBtn" class="theme-btn" aria-label="Ganti mode gelap atau terang"></button>
+    <button type="button" id="mastToggle" class="label mast-toggle" aria-expanded="true" aria-controls="mastBody"><span>Total saldo</span><span class="mast-arrow" aria-hidden="true">▾</span></button>
+    <div class="mast-body" id="mastBody"><div class="mast-inner">
+      <div class="balance" id="totalBalance">Rp 0</div>
+      <div class="accounts-row" id="accountsRow" title="Ketuk saldo untuk koreksi, ketuk nama untuk ganti nama"></div>
+      <button type="button" id="openTransferBtn" class="link-btn">⇄ Pindah saldo</button>
+    </div></div>
   </div>
 
   <div class="tabs">
@@ -3264,18 +3296,45 @@ if(!auth){
   const EYE_OFF=SVG+'<path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 4.2-.9"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
   function paintHeader(){
     $('hdrDate').textContent = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-    const n = lsGet(NAME_KEY).trim();
-    $('hdrHi').textContent = n ? 'Halo, '+n+' 👋' : 'Halo 👋';
+    const n = lsGet(NAME_KEY).trim(), h = new Date().getHours();
+    const g = h>=4 && h<11 ? ['Selamat Pagi','🌅'] : h>=11 && h<15 ? ['Selamat Siang','☀️'] : h>=15 && h<18 ? ['Selamat Sore','🌇'] : ['Selamat Malam','🌙'];
+    $('hdrHi').textContent = g[0] + (n ? ', '+n : '') + ' ' + g[1];
   }
+  // Mode sembunyikan: 'off' | 'saldo' (total saldo + saldo tiap akun) | 'all' (semua angka). Nilai lama '1' dianggap 'all'.
+  const hideMode=()=>{ const v=lsGet(HIDE_KEY); return v==='saldo' ? 'saldo' : (v==='all' || v==='1') ? 'all' : 'off'; };
+  const menu=$('hideMenu'), hbtn=$('hideBalBtn');
   function paintHide(){
-    const on = lsGet(HIDE_KEY)==='1', b = $('hideBalBtn');
-    document.body.classList.toggle('hide-money', on);
-    b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    b.setAttribute('aria-label', on ? 'Tampilkan saldo' : 'Sembunyikan saldo');
-    b.title = on ? 'Tampilkan saldo' : 'Sembunyikan saldo';
-    b.innerHTML = on ? EYE_OFF : EYE;
+    const m = hideMode(), on = m!=='off';
+    document.body.classList.toggle('hide-money', m==='all');
+    document.body.classList.toggle('hide-saldo', m==='saldo');
+    hbtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    const lbl = on ? 'Atur sembunyikan saldo (aktif)' : 'Sembunyikan saldo';
+    hbtn.setAttribute('aria-label', lbl); hbtn.title = lbl;
+    hbtn.innerHTML = on ? EYE_OFF : EYE;
+    menu.querySelectorAll('.hm-item[data-mode]').forEach(b=>{
+      const mode=b.dataset.mode;
+      if(mode==='off') b.hidden = !on; else b.classList.toggle('on', mode===m);
+    });
   }
-  $('hideBalBtn').addEventListener('click',()=>{ lsSet(HIDE_KEY, lsGet(HIDE_KEY)==='1' ? '0' : '1'); paintHide(); });
+  function setMenu(open){
+    menu.hidden = !open; hbtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  hbtn.addEventListener('click',e=>{ e.stopPropagation(); setMenu(menu.hidden); });
+  menu.addEventListener('click',e=>{
+    const b = e.target.closest('.hm-item'); if(!b) return;
+    e.stopPropagation();
+    const mode = b.dataset.mode;
+    // Ketuk opsi yang sedang aktif = matikan lagi
+    lsSet(HIDE_KEY, mode===hideMode() ? 'off' : mode);
+    paintHide(); setMenu(false);
+  });
+  document.addEventListener('click',e=>{ if(!menu.hidden && !menu.contains(e.target) && e.target!==hbtn) setMenu(false); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !menu.hidden){ setMenu(false); hbtn.focus(); } });
+
+  // Bayangan/garis tipis di header saat halaman di-scroll
+  const hdrEl=document.querySelector('.hdr');
+  const onScroll=()=>hdrEl.classList.toggle('is-stuck', (window.scrollY||document.documentElement.scrollTop)>6);
+  window.addEventListener('scroll', onScroll, {passive:true}); onScroll();
 
   const nick=$('nickIn');
   if(nick){ nick.value = lsGet(NAME_KEY); nick.addEventListener('input',()=>{ lsSet(NAME_KEY, nick.value.trim()); paintHeader(); }); }
@@ -3309,7 +3368,13 @@ if(!auth){
   }
   $('refreshBtn').addEventListener('click', refreshData);
   document.addEventListener('visibilitychange',()=>{ if(!document.hidden) paintHeader(); });
+  // Lipat/buka Total saldo + akun (ingat pilihan terakhir)
+  const mast=document.querySelector('.masthead'), mbtn=$('mastToggle'), MAST_KEY='buku-kas-mast';
+  function paintMast(){ const c=lsGet(MAST_KEY)==='1'; mast.classList.toggle('collapsed', c); mbtn.setAttribute('aria-expanded', c ? 'false' : 'true'); }
+  mbtn.addEventListener('click',()=>{ lsSet(MAST_KEY, lsGet(MAST_KEY)==='1' ? '0' : '1'); paintMast(); });
+  paintMast();
   paintHeader(); paintHide();
+  setInterval(paintHeader, 60000);
 })();
 
 /* V43: maskot kucing koin dengan beberapa suasana hati */
