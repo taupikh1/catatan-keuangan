@@ -426,7 +426,7 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
 .toggle button.active{background:linear-gradient(135deg,var(--accent),var(--accent2))!important; color:var(--on)!important; border-radius:12px;}
 .link-btn{color:var(--as);}
 /* menu bawah melayang */
-:root{--nav-b:max(8px, calc(env(safe-area-inset-bottom,0px) - 18px));} /* jarak menu bawah dari tepi layar: lebih nempel, tetap di atas garis home iPhone */
+:root{--nav-b:max(6px, calc(env(safe-area-inset-bottom,0px) - 24px));} /* jarak menu bawah dari tepi layar: lebih nempel, tetap di atas garis home iPhone */
 .tabs{position:fixed; left:50%; bottom:var(--nav-b); transform:translateX(-50%); width:min(448px,calc(100% - 24px)); margin:0!important; padding:8px 6px; z-index:19; display:grid!important; grid-template-columns:1fr 1fr 68px 1fr 1fr; align-items:center; background:var(--navbg); border:1px solid rgba(var(--w),.1)!important; border-radius:26px; -webkit-backdrop-filter:blur(22px) saturate(1.4); backdrop-filter:blur(22px) saturate(1.4); box-shadow:0 14px 40px var(--shadow);}
 .tab:nth-child(3){grid-column:4;} .tab:nth-child(4){grid-column:5;}
 .tab{display:flex!important; flex-direction:column; align-items:center; gap:3px; padding:6px 0!important; font-size:10.5px!important; font-weight:600!important; color:var(--muted)!important; background:none; border:none; transition:color .2s,transform .2s;}
@@ -601,6 +601,12 @@ body.hide-money .balance,body.hide-money .acc-chip input.bal-input,body.hide-sal
 .mast-body{display:grid; grid-template-rows:1fr; transition:grid-template-rows .28s ease, opacity .2s;}
 .mast-inner{min-height:0; overflow:hidden;}
 .masthead.collapsed .mast-body{grid-template-rows:0fr; opacity:0; visibility:hidden; transition:grid-template-rows .28s ease, opacity .2s, visibility 0s .28s;}
+/* Form catatan: daftar kategori tidak lagi transparan/menimpa tombol, dan membuka ke atas supaya tidak terpotong di bawah sheet */
+#entryForm .combo-list{top:auto; bottom:calc(100% + 6px); max-height:168px; z-index:30; background:linear-gradient(rgba(var(--w),.07),rgba(var(--w),.07)),var(--sheet); border:1px solid rgba(var(--w),.14); border-radius:14px; box-shadow:0 -10px 28px rgba(0,0,0,.35); overscroll-behavior:contain; -webkit-overflow-scrolling:touch;}
+#entryForm .combo-list .opt{padding:12px 14px; font-size:14.5px;}
+#entryForm .submit{position:relative; z-index:1;}
+/* Tombol Pengeluaran aktif berwarna merah (sebelumnya sama-sama hijau dengan Pemasukan) */
+.toggle button.active[data-type="keluar"]{background:var(--expense)!important; background:linear-gradient(135deg,var(--expense),color-mix(in srgb,var(--expense) 78%,#000))!important; color:#fff!important;}
 /* Menu sembunyikan saldo */
 .hide-menu{position:absolute; right:16px; top:calc(100% - 4px); width:min(268px,calc(100vw - 32px)); background:var(--sheet); color:var(--ink); border:1px solid var(--line); border-radius:18px; padding:6px; box-shadow:0 16px 40px var(--shadow); z-index:5; animation:hmIn .16s ease-out;}
 .hide-menu[hidden]{display:none;}
@@ -2388,7 +2394,7 @@ function attachDeleteHandlers(container){
 document.body.appendChild($('entryForm'));
 const sheetBg = document.createElement('div'); sheetBg.className='sheet-bg'; document.body.appendChild(sheetBg);
 const fab = document.createElement('button'); fab.type='button'; fab.className='fab'; fab.textContent='+'; fab.setAttribute('aria-label','Tambah catatan'); document.body.appendChild(fab);
-function openSheet(){ $('entryForm').classList.add('open'); sheetBg.classList.add('open'); fab.classList.add('hide'); }
+function openSheet(){ $('entryForm').scrollTop=0; closeCatDropdown(); $('entryForm').classList.add('open'); sheetBg.classList.add('open'); fab.classList.add('hide'); }
 function closeSheet(){ editingTransferIds = null; $('profileSheet').classList.remove('open'); $('entryForm').classList.remove('open'); $('transferForm').classList.remove('open'); sheetBg.classList.remove('open'); fab.classList.remove('hide'); }
 fab.addEventListener('click', ()=>{ openSheet(); setTimeout(()=>$('desc').focus(), 260); });
 /* V26: sembunyikan tombol + saat dropdown tanggal dibuka, supaya tidak menutupi pilihan */
