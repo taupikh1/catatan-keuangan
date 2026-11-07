@@ -578,6 +578,19 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
 .entry .edit{grid-area:edit;} .entry .del{grid-area:del;}
 .entry .edit,.entry .del{width:34px; height:34px; min-width:34px!important; min-height:34px!important; padding:0!important; justify-content:center; align-self:center; justify-self:center;}
 .page{padding-bottom:150px;}
+/* Header sapaan, tanggal, tombol segarkan & sembunyikan saldo */
+.hdr{display:flex; align-items:center; justify-content:space-between; gap:12px; text-align:left; margin-bottom:18px;}
+.hdr-txt{min-width:0;}
+.hdr-date{font-size:12px; color:var(--muted); font-weight:500;}
+.hdr-hi{font-size:22px; font-weight:800; letter-spacing:-.02em; line-height:1.2; overflow-wrap:anywhere; margin-top:2px;}
+.hdr-btns{display:flex; gap:8px; flex-shrink:0;}
+.hdr-btn{width:42px; height:42px; display:grid; place-items:center; border-radius:14px; border:1px solid var(--line); background:rgba(var(--w),.06); color:var(--ink); cursor:pointer; padding:0; -webkit-tap-highlight-color:transparent; transition:transform .15s,background .2s;}
+.hdr-btn:active{transform:scale(.92);}
+.hdr-btn[aria-pressed="true"]{background:rgba(var(--ar),.18); color:var(--as);}
+.hdr-btn.spin svg{animation:hdrSpin .8s linear infinite;}
+@keyframes hdrSpin{to{transform:rotate(360deg)}}
+body.hide-money .balance,body.hide-money .acc-chip input.bal-input{filter:blur(9px); pointer-events:none; -webkit-user-select:none; user-select:none;}
+#nickIn{width:100%;}
 </style>
 </head>
 <body>
@@ -597,6 +610,16 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
 
   <div class="masthead">
     <button type="button" id="themeBtn" class="theme-btn" aria-label="Ganti mode gelap atau terang"></button>
+    <div class="hdr">
+      <div class="hdr-txt">
+        <div class="hdr-date" id="hdrDate"></div>
+        <div class="hdr-hi" id="hdrHi">Halo 👋</div>
+      </div>
+      <div class="hdr-btns">
+        <button type="button" id="refreshBtn" class="hdr-btn" aria-label="Segarkan data" title="Segarkan data"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></button>
+        <button type="button" id="hideBalBtn" class="hdr-btn" aria-label="Sembunyikan saldo" aria-pressed="false" title="Sembunyikan saldo"></button>
+      </div>
+    </div>
     <div class="label">Total saldo</div>
     <div class="balance" id="totalBalance">Rp 0</div>
     <div class="accounts-row" id="accountsRow" title="Ketuk saldo untuk koreksi, ketuk nama untuk ganti nama"></div>
@@ -858,7 +881,9 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
   <div class="view" id="view-lainnya">
     <div class="card" id="lookCard">
       <h3>Tampilan</h3>
-      <div class="look-lbl" style="margin-top:0;">Mode</div>
+      <div class="look-lbl" style="margin-top:0;">Nama panggilan (untuk sapaan di atas)</div>
+      <input type="text" id="nickIn" maxlength="24" placeholder="mis. Taupik" autocomplete="off">
+      <div class="look-lbl">Mode</div>
       <div class="mode-seg" id="modeSeg"><button type="button" data-m="dark">Gelap</button><button type="button" data-m="light">Terang</button></div>
       <div class="look-lbl">Warna aksen</div>
       <div class="sw-row" id="lookSw"></div>
@@ -3096,6 +3121,64 @@ if(!auth){
   BK_apply(); paint();
 })();
 
+/* V45: sapaan + tanggal, segarkan data, sembunyikan saldo */
+(function(){
+  const NAME_KEY='buku-kas-name', HIDE_KEY='buku-kas-hide';
+  const lsGet=k=>{ try{ return localStorage.getItem(k)||''; }catch(e){ return ''; } };
+  const lsSet=(k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} };
+  const SVG='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">';
+  const EYE=SVG+'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const EYE_OFF=SVG+'<path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 4.2-.9"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+  function paintHeader(){
+    $('hdrDate').textContent = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    const n = lsGet(NAME_KEY).trim();
+    $('hdrHi').textContent = n ? 'Halo, '+n+' 👋' : 'Halo 👋';
+  }
+  function paintHide(){
+    const on = lsGet(HIDE_KEY)==='1', b = $('hideBalBtn');
+    document.body.classList.toggle('hide-money', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.setAttribute('aria-label', on ? 'Tampilkan saldo' : 'Sembunyikan saldo');
+    b.title = on ? 'Tampilkan saldo' : 'Sembunyikan saldo';
+    b.innerHTML = on ? EYE_OFF : EYE;
+  }
+  $('hideBalBtn').addEventListener('click',()=>{ lsSet(HIDE_KEY, lsGet(HIDE_KEY)==='1' ? '0' : '1'); paintHide(); });
+
+  const nick=$('nickIn');
+  if(nick){ nick.value = lsGet(NAME_KEY); nick.addEventListener('input',()=>{ lsSet(NAME_KEY, nick.value.trim()); paintHeader(); }); }
+
+  async function refreshData(){
+    const btn=$('refreshBtn'); if(btn.classList.contains('spin')) return;
+    btn.classList.add('spin');
+    const t0=Date.now(); let msg='Data sudah yang terbaru.', err=false;
+    try{
+      const pending = lsGet(LS_DIRTY);
+      if(docRef && pending){
+        cloudWrite(); msg='Ada perubahan yang belum terkirim. Dikirim ke cloud sekarang.';
+      } else if(docRef && navigator.onLine!==false){
+        const doc = await docRef.get({source:'server'}), data = doc.data();
+        if(data){
+          transactions = data.transactions || [];
+          settings = { ...settings, ...(data.settings||{}) };
+          try{ localStorage.setItem(LS_TX, JSON.stringify(transactions)); localStorage.setItem(LS_SETTINGS, JSON.stringify(settings)); }catch(e){}
+          if(fixAllocParents()) saveTransactions();
+        }
+        rebuildUI(); msg='Data disegarkan dari cloud.';
+      } else {
+        await loadAll();
+        msg = docRef ? 'Tidak ada koneksi. Menampilkan data di HP ini.' : 'Tampilan disegarkan dari data di HP ini.';
+      }
+      if(editingId===null && !$('entryForm').classList.contains('open')) $('date').value = todayStr();
+    }catch(e){ msg='Gagal menyegarkan: '+((e && e.message) || 'coba lagi'); err=true; }
+    paintHeader();
+    const wait = Math.max(0, 700-(Date.now()-t0));
+    setTimeout(()=>{ btn.classList.remove('spin'); showStatus(msg, err); }, wait);
+  }
+  $('refreshBtn').addEventListener('click', refreshData);
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) paintHeader(); });
+  paintHeader(); paintHide();
+})();
+
 /* V43: maskot kucing koin dengan beberapa suasana hati */
 function mascot(mood){
   const K='#2b2118', F='#ffe2b8';
@@ -3193,9 +3276,7 @@ function bapaoSVG(){
   };
   const cheer=['Mantap! Tercatat. Aku joget dulu 💃','Yeay, satu catatan lagi!','Rajin banget! Hadiahnya joget gratis.','Catatan aman, dompet makin jelas!'];
   let st='dance', idx=0, timer=null, bubT=null;
-  const onSettings=()=>{ const t=document.querySelector('.tab.active'); return !!t && t.dataset.view==='lainnya'; };
-  function say(t,ms){ bub.textContent=t; clearTimeout(bubT); if(onSettings()){ bub.classList.remove('on'); return; } bub.classList.add('on'); bubT=setTimeout(()=>bub.classList.remove('on'),ms||4500); }
-  document.querySelectorAll('.tab').forEach(tb=>tb.addEventListener('click',()=>{ if(onSettings()) bub.classList.remove('on'); }));
+  function say(t,ms){ bub.textContent=t; bub.classList.add('on'); clearTimeout(bubT); bubT=setTimeout(()=>bub.classList.remove('on'),ms||4500); }
   function setS(s,msg){ st=s; svg.setAttribute('class','bp s-'+s); say(msg||pick(L[s])); }
   const seq=[()=>['dance',rnd(18000,32000)],()=>['tired',5500],()=>['sleep',rnd(14000,22000)],()=>['wake',3200],()=>[Math.random()<.5?'eat':'drink',9500]];
   function run(){ clearTimeout(timer); const x=seq[idx%seq.length](); idx++; setS(x[0]); timer=setTimeout(run,x[1]); }
@@ -3211,7 +3292,13 @@ function bapaoSVG(){
   };
   const seg=$('palSeg');
   function vis(){ let on=true; try{ on=localStorage.getItem(KEY)!=='off'; }catch(e){} wrap.style.display=on?'flex':'none'; if(seg) seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',(b.dataset.v==='on')===on)); }
-  if(seg) seg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ try{localStorage.setItem(KEY,b.dataset.v);}catch(e){} vis(); }));
+  if(seg) seg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+    const was = wrap.style.display!=='none';
+    try{localStorage.setItem(KEY,b.dataset.v);}catch(e){} vis();
+    const now = wrap.style.display!=='none';
+    if(now && !was){ clearTimeout(timer); idx=0; setS('dance','Halo lagi! Aku Bapao. Ketuk aku ya!'); timer=setTimeout(run, rnd(15000,25000)); }
+    else if(!now){ clearTimeout(bubT); bub.classList.remove('on'); }
+  }));
   vis(); setS('dance','Halo! Aku Bapao. Ketuk aku ya!'); timer=setTimeout(()=>{ idx=1; run(); }, rnd(18000,28000));
   const _st=saveTransactions; saveTransactions=function(){ const r=_st.apply(this,arguments); try{ window.bapaoCheer(); }catch(e){} return r; };
 })();
