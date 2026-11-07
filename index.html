@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Buku Kas</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -602,6 +602,8 @@ body.hide-money .balance,body.hide-money .acc-chip input.bal-input{filter:blur(9
 .pf-stats b{display:block; font-size:16px; font-weight:800; white-space:nowrap;}
 .pf-stats span{font-size:11px; color:var(--muted);}
 @supports (-webkit-touch-callout:none){ input,select,textarea{font-size:16px!important;} }
+.page{padding-top:calc(22px + env(safe-area-inset-top,0px));}
+body.hide-money .amount,body.hide-money .month-stats b,body.hide-money .r-extra b,body.hide-money .pie-legend .val,body.hide-money .pie-center b,body.hide-money .day-head span:last-child,body.hide-money .money{filter:blur(8px); -webkit-user-select:none; user-select:none;}
 </style>
 </head>
 <body>
@@ -658,6 +660,7 @@ body.hide-money .balance,body.hide-money .acc-chip input.bal-input{filter:blur(9
     </div>
     <div class="reminder-banner" id="allocReminder" style="display:none;"></div>
     <div class="reminder-banner" id="sizeWarn" style="display:none;"></div>
+    <div class="card" id="billCard" style="display:none;"><h3>Tagihan bulan ini</h3><div id="billList"></div></div>
     <div class="card">
       <h3>Ringkasan bulan ini</h3>
       <div class="month-stats">
@@ -696,6 +699,7 @@ body.hide-money .balance,body.hide-money .acc-chip input.bal-input{filter:blur(9
       <div class="field" id="periodRowR" style="display:none; margin-bottom:10px;"><label for="periodR">Periode</label><select id="periodR"></select></div>
       <div class="hint-text" id="searchSummaryR" style="display:none; margin-bottom:10px;"></div>
       <div class="field" id="sortRowR" style="margin-bottom:10px;"><label for="sortR">Urutkan</label><select id="sortR"></select></div>
+      <div class="seg qseg" style="margin-bottom:10px;"><button type="button" data-q="today">Hari ini</button><button type="button" data-q="week">Minggu ini</button></div>
       <div class="field" id="dayRowR" style="margin-bottom:10px;"><label for="dayR">Tanggal</label><select id="dayR"></select></div>
       <ul class="ledger" id="recentLedger"></ul>
       <button type="button" class="submit outline" id="seeAllBtn" style="display:none; margin-top:10px;"></button>
@@ -796,6 +800,7 @@ body.hide-money .balance,body.hide-money .acc-chip input.bal-input{filter:blur(9
     <div class="hint-text" id="searchSummary" style="display:none; margin-bottom:10px;"></div>
     <div class="field" id="sortRowT" style="margin-bottom:12px;"><label for="sortT">Urutkan</label><select id="sortT"></select></div>
 
+    <div class="seg qseg"><button type="button" data-q="today">Hari ini</button><button type="button" data-q="week">Minggu ini</button></div>
     <div class="field" id="dayRowT" style="margin-bottom:12px;"><label for="dayT">Tanggal</label><select id="dayT"></select></div>
 
     <div class="card" style="padding:0; border-bottom:none; margin-bottom:0;">
@@ -854,6 +859,24 @@ body.hide-money .balance,body.hide-money .acc-chip input.bal-input{filter:blur(9
         </div>
       </div>
       <button type="button" class="submit" id="addSavingBtn">Tambah tabungan</button>
+    </div>
+
+    <div class="card">
+      <h3>Tagihan berulang</h3>
+      <p class="hint-text">Tagihan tiap bulan (listrik, cicilan, langganan). Muncul di Ringkasan dengan tombol Bayar yang langsung mencatat pengeluarannya.</p>
+      <div id="billManage"></div>
+      <div class="row" style="margin-top:12px;">
+        <div class="field"><label for="newBillName">Nama tagihan</label><input type="text" id="newBillName" placeholder="mis. Listrik"></div>
+        <div class="field"><label for="newBillAmt">Nominal (Rp)</label><input type="text" inputmode="numeric" id="newBillAmt" placeholder="0"></div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <div class="field"><label for="newBillDay">Jatuh tempo (tanggal)</label><select id="newBillDay"></select></div>
+        <div class="field"><label for="newBillAcc">Dibayar dari akun</label><select id="newBillAcc"></select></div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <div class="field"><label for="newBillCat">Kategori</label><select id="newBillCat"></select></div>
+      </div>
+      <button type="button" class="submit" id="addBillBtn">Tambah tagihan</button>
     </div>
 
     <details class="card fold">
@@ -971,7 +994,7 @@ body.hide-money .balance,body.hide-money .acc-chip input.bal-input{filter:blur(9
     <div class="pf-av" id="pfAv">?</div>
     <div class="pf-id"><div class="pf-name" id="pfName">-</div><div class="pf-mail" id="pfMail">-</div></div>
   </div>
-  <div class="look-lbl">Nama panggilan (untuk sapaan di beranda)</div>
+  <div class="look-lbl">Nama panggilan (untuk sapaan, tersimpan di HP ini saja)</div>
   <input type="text" id="nickIn" maxlength="24" placeholder="mis. Taupik" autocomplete="off">
   <div class="pf-stats">
     <div><b id="pfCount">0</b><span>Catatan</span></div>
@@ -988,7 +1011,7 @@ body.hide-money .balance,body.hide-money .acc-chip input.bal-input{filter:blur(9
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <script>
-/* Buku Kas - tampilan minimalis. V47: menu profil (ikon orang di header: nama panggilan, email, statistik, backup, keluar). V46: impor JSON tidak membawa alamat/token Sheets dari file, ketik cepat lebih akurat, form tidak menutup sendiri kalau isian belum valid, impor CSV mempertahankan pasangan pindah saldo + ekspor CSV aman dari formula injection, pencarian tahan catatan tanpa keterangan/kategori, filter Tren kategori tidak lagi memfilter Catatan bulan ini, font input 16px di iPhone. V44: Bapao si bakpao joget. V43: maskot kucing koin. V42: menu tampilan (mode + warna aksen), default hijau zamrud. V41: ketik cepat + grafik. V40: donat + ikon kategori. V39: tampilan baru gelap-ungu, menu bawah, animasi. V38: salinan satu arah ke Google Sheets (opsional, lewat Apps Script). V37: data yang dihapus nggak hidup lagi dari cloud (simpan tanpa merge), konfirmasi ganti nama akun, peringatan saldo minus di semua pengeluaran (baru & edit). V36: peringatan ukuran data (batas dokumen cloud), peringatan saldo minus saat pindah saldo, setoran bulanan yang dibutuhkan untuk target tabungan, grafik saldo dari waktu ke waktu, urutkan catatan berdasarkan nominal terbesar/terkecil. V35: perubahan saat offline ikut terlindungi dari timpaan cloud, konfirmasi hapus gaji/alokasi, semua konfirmasi pakai dialog aplikasi, pindah saldo bisa diedit. V34: pencarian di Ringkasan (sama seperti tab Transaksi) + tombol ✕ hapus tulisan di kolom cari. V33: sinkron cloud tidak menimpa perubahan yang belum terkirim, 5 cadangan lokal, filter periode saat mencari, kategori tersembunyi bisa ditampilkan, Lihat semua riwayat pindah saldo. Dasar: V28. Baru: menu Tabungan di tab Anggaran (tiap tabungan = akun, di atas Dana Pribadi), tombol Lupa kata sandi di form login. */
+/* Buku Kas - tampilan minimalis. V48: tagihan berulang, pengeluaran terbesar, chip Hari ini/Minggu ini, perbaikan sinkron/impor/ekspor/profil. V47: menu profil (ikon orang di header: nama panggilan, email, statistik, backup, keluar). V46: impor JSON tidak membawa alamat/token Sheets dari file, ketik cepat lebih akurat, form tidak menutup sendiri kalau isian belum valid, impor CSV mempertahankan pasangan pindah saldo + ekspor CSV aman dari formula injection, pencarian tahan catatan tanpa keterangan/kategori, filter Tren kategori tidak lagi memfilter Catatan bulan ini, font input 16px di iPhone. V44: Bapao si bakpao joget. V43: maskot kucing koin. V42: menu tampilan (mode + warna aksen), default hijau zamrud. V41: ketik cepat + grafik. V40: donat + ikon kategori. V39: tampilan baru gelap-ungu, menu bawah, animasi. V38: salinan satu arah ke Google Sheets (opsional, lewat Apps Script). V37: data yang dihapus nggak hidup lagi dari cloud (simpan tanpa merge), konfirmasi ganti nama akun, peringatan saldo minus di semua pengeluaran (baru & edit). V36: peringatan ukuran data (batas dokumen cloud), peringatan saldo minus saat pindah saldo, setoran bulanan yang dibutuhkan untuk target tabungan, grafik saldo dari waktu ke waktu, urutkan catatan berdasarkan nominal terbesar/terkecil. V35: perubahan saat offline ikut terlindungi dari timpaan cloud, konfirmasi hapus gaji/alokasi, semua konfirmasi pakai dialog aplikasi, pindah saldo bisa diedit. V34: pencarian di Ringkasan (sama seperti tab Transaksi) + tombol ✕ hapus tulisan di kolom cari. V33: sinkron cloud tidak menimpa perubahan yang belum terkirim, 5 cadangan lokal, filter periode saat mencari, kategori tersembunyi bisa ditampilkan, Lihat semua riwayat pindah saldo. Dasar: V28. Baru: menu Tabungan di tab Anggaran (tiap tabungan = akun, di atas Dana Pribadi), tombol Lupa kata sandi di form login. */
 const DEFAULT_ACCOUNTS = ['Dana Darurat','Uang Tabungan','Uang Belanja','Dana Pribadi'];
 const DEFAULT_CATEGORIES = ['Gaji','Kontrakan','Internet','Makan','Transport','Belanja','Tagihan','Hiburan','Kesehatan','Pendidikan','Lainnya'];
 const RENAME_MAP = {
@@ -999,7 +1022,7 @@ const RENAME_MAP = {
 
 let transactions = [];
 let editingTransferIds = null;
-let dayFilter = 0, trendType = 'keluar', pieType = 'keluar', txFilter = 'all';
+let dayFilter = 0, trendType = 'keluar', pieType = 'keluar', txFilter = 'all', quickRange = '';
 const DEFAULT_ALLOCATIONS = [
   { id:'a1', label:'Kontrakan',   kind:'expense',  target:'Kontrakan',    amount:1000000 },
   { id:'a2', label:'Internet',    kind:'expense',  target:'Internet',     amount:400000 },
@@ -1183,7 +1206,7 @@ const firebaseConfig = {
 const FB_OK = typeof firebase !== 'undefined';
 let auth = null;
 if(FB_OK){ firebase.initializeApp(firebaseConfig); auth = firebase.auth(); auth.languageCode = 'id'; }
-let db = null, docRef = null, unsubSnapshot = null, cloudSaveTimer = null;
+let db = null, docRef = null, unsubSnapshot = null, cloudSaveTimer = null, localQueued = false;
 
 async function doLogin(){
   const email = $('authEmail').value.trim();
@@ -1196,7 +1219,8 @@ async function doLogin(){
   try{
     await auth.signInWithEmailAndPassword(email, pass);
   }catch(e){
-    $('authError').textContent = 'Email atau kata sandi salah.';
+    const c = e && e.code;
+    $('authError').textContent = c==='auth/network-request-failed' ? 'Tidak ada koneksi internet.' : c==='auth/too-many-requests' ? 'Terlalu banyak percobaan. Coba lagi beberapa menit lagi.' : 'Email atau kata sandi salah.';
   }
   $('authLoginBtn').disabled = false;
   $('authLoginBtn').textContent = 'Masuk';
@@ -1224,7 +1248,10 @@ async function doForgot(){
 $('authForgotBtn').addEventListener('click', doForgot);
 $('authLoginBtn').addEventListener('click', doLogin);
 $('authPassword').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
-$('logoutBtn').addEventListener('click', ()=>{ if(auth) auth.signOut(); });
+$('logoutBtn').addEventListener('click', async ()=>{
+  const ok = await confirmDialog({ title:'Keluar dari akun?', text:'Data tetap aman di cloud. Kamu perlu masuk lagi untuk membuka Buku Kas.', ok:'Keluar', cancel:'Batal' });
+  if(ok && auth) auth.signOut();
+});
 
 const onAuthChange = user=>{
   if(user){
@@ -1246,17 +1273,29 @@ function startSync(){
   loadAll();
   let first = true;
   const uid = auth && auth.currentUser ? auth.currentUser.uid : '';
-  unsubSnapshot = docRef.onSnapshot(doc=>{
-    if(doc.metadata.hasPendingWrites) return;
+  let asking = false;
+  unsubSnapshot = docRef.onSnapshot(async doc=>{
+    if(doc.metadata.hasPendingWrites || asking || localQueued) return;
     // Snapshot pertama: kalau di HP ini masih ada perubahan yang belum sempat terkirim, data HP yang menang (jangan ditimpa data cloud yang lama).
     if(first){
       first = false;
       let pending = '';
       try{ pending = localStorage.getItem(LS_DIRTY) || ''; }catch(e){}
       if(pending && (pending === uid || pending === '?')){
-        showStatus('Ada perubahan yang belum tersinkron. Dikirim ke cloud sekarang.');
-        cloudWrite();
-        return;
+        const cd = doc.data();
+        if(pending === '?' && cd && Array.isArray(cd.transactions) && cd.transactions.length){
+          // Data HP dibuat tanpa akun dan cloud sudah berisi: jangan timpa diam-diam.
+          asking = true;
+          const pick = await choiceDialog({ title:'Data HP beda dengan cloud', text:`Ada ${transactions.length} catatan di HP ini yang dibuat tanpa akun, sedangkan cloud sudah punya ${cd.transactions.length} catatan. Mana yang dipakai? Yang tidak dipilih tertimpa (HP ini tetap menyimpan cadangan lokal).`, options:[{ label:'Pakai data cloud', value:'cloud' }, { label:'Pakai data HP ini (timpa cloud)', value:'local', danger:true }] });
+          asking = false;
+          if(pick === 'local'){ cloudWrite(); return; }
+          saveSafetySnapshot(true);
+          try{ localStorage.removeItem(LS_DIRTY); }catch(e){}
+        } else {
+          showStatus('Ada perubahan yang belum tersinkron. Dikirim ke cloud sekarang.');
+          cloudWrite();
+          return;
+        }
       }
     }
     const data = doc.data();
@@ -1276,6 +1315,7 @@ function startSync(){
 
 let dirtySeq = 0;
 function cloudWrite(){
+  localQueued = false;
   if(!docRef) return;
   const mySeq = dirtySeq;
   docRef.set({
@@ -1294,6 +1334,7 @@ function pushToCloud(){
   dirtySeq++;
   try{ localStorage.setItem(LS_DIRTY, auth && auth.currentUser ? auth.currentUser.uid : '?'); }catch(e){}
   if(!docRef) return;
+  localQueued = true;
   clearTimeout(cloudSaveTimer);
   cloudSaveTimer = setTimeout(cloudWrite, 500);
 }
@@ -1364,7 +1405,8 @@ function markExported(msg){
   showStatus(msg, false);
 }
 $('exportBtn').addEventListener('click', ()=>{
-  const payload = { app:'buku-kas', exportedAt:new Date().toISOString(), transactions, settings };
+  const { sheetUrl:_su, sheetToken:_st, ...safeSettings } = settings;
+  const payload = { app:'buku-kas', exportedAt:new Date().toISOString(), transactions, settings:safeSettings };
   downloadFile(`buku-kas-${todayStr()}.json`, JSON.stringify(payload, null, 2), 'application/json');
   markExported('Data berhasil diekspor.');
 });
@@ -1504,6 +1546,7 @@ $('importFile').addEventListener('change', e=>{
   if(!file) return;
   const reader = new FileReader();
   reader.onload = async () => {
+    $('importFile').value = '';
     try{
       const data = JSON.parse(reader.result);
       if(!data || !Array.isArray(data.transactions) || !data.settings || typeof data.settings !== 'object' || Array.isArray(data.settings)){
@@ -1521,7 +1564,7 @@ $('importFile').addEventListener('change', e=>{
         const c = {...t, amount:Number(t.amount)};
         c.desc = String(c.desc ?? '').trim() || '(tanpa keterangan)';
         c.category = String(c.category ?? '').trim() || 'Lainnya';
-        if(c.id===undefined || c.id===null || usedIds.has(c.id)) c.id = nid++; usedIds.add(c.id); return c;
+        const n = Number(c.id); c.id = (c.id===undefined || c.id===null || c.id==='' || !Number.isFinite(n) || usedIds.has(n)) ? nid++ : n; usedIds.add(c.id); return c;
       });
       // Alamat & token Google Sheets TIDAK diambil dari file (file orang lain bisa mengalihkan salinan datamu). Yang di perangkat ini tetap dipakai.
       const keepSheetUrl = settings.sheetUrl, keepSheetToken = settings.sheetToken;
@@ -1530,7 +1573,8 @@ $('importFile').addEventListener('change', e=>{
       const isObj = o => o && typeof o==='object' && !Array.isArray(o);
       if(!Array.isArray(settings.accounts) || !settings.accounts.length || !settings.accounts.every(a=>typeof a==='string' && a)) settings.accounts = [...DEFAULT_ACCOUNTS];
       ['budgets','savings','initialBalances'].forEach(k=>{ if(!isObj(settings[k])) settings[k] = {}; });
-      ['savingAccounts','salaryAllocations','hiddenCategories'].forEach(k=>{ if(!Array.isArray(settings[k])) settings[k] = k==='salaryAllocations' ? [] : []; });
+      ['savingAccounts','salaryAllocations','hiddenCategories','bills'].forEach(k=>{ if(!Array.isArray(settings[k])) settings[k] = []; });
+      settings.bills = settings.bills.filter(b=> b && typeof b==='object' && b.id!==undefined);
       if(keepSheetUrl !== undefined) settings.sheetUrl = keepSheetUrl; else delete settings.sheetUrl;
       if(keepSheetToken !== undefined) settings.sheetToken = keepSheetToken; else delete settings.sheetToken;
       saveTransactions();
@@ -1679,10 +1723,10 @@ function renderAllocList(){
   } else {
     list.innerHTML = settings.salaryAllocations.map(a=>{
       const subText = a.kind==='expense' ? `Pengeluaran · ${escapeHtml(a.target)}` : `Pindah ke akun · ${escapeHtml(a.target)}`;
-      return `<div class="alloc-row" data-id="${a.id}">
+      return `<div class="alloc-row" data-id="${escapeHtml(a.id)}">
         <div class="info"><div class="lbl">${escapeHtml(a.label)}</div><div class="sub">${subText}</div></div>
-        <input type="text" inputmode="numeric" class="alloc-amt" data-id="${a.id}" value="${formatNum(a.amount)}">
-        <button type="button" class="del" data-id="${a.id}" title="Hapus">✕</button>
+        <input type="text" inputmode="numeric" class="alloc-amt" data-id="${escapeHtml(a.id)}" value="${formatNum(a.amount)}">
+        <button type="button" class="del" data-id="${escapeHtml(a.id)}" title="Hapus">✕</button>
       </div>`;
     }).join('');
   }
@@ -1790,7 +1834,8 @@ $('entryForm').addEventListener('submit', async e=>{
     if(totalAlloc > amount){
       proceed = await confirmDialog({ title:'Total alokasi melebihi jumlah', text:`Total alokasi (${fmt(totalAlloc)}) lebih besar dari jumlah yang dicatat (${fmt(amount)}). Saldo akun bisa jadi minus.`, ok:'Tetap alokasikan', cancel:'Batal' });
     }
-    if(proceed){
+    if(!proceed){ transactions = transactions.filter(t=>t.id!==parentId); return; }
+    {
       transactions.find(t=>t.id===parentId).allocationGroupId = parentId;
       settings.salaryAllocations.forEach(a=>{
         if(a.kind==='expense'){
@@ -1846,7 +1891,7 @@ function shiftMonth(delta){
   const [y,m] = currentMonth.split('-').map(Number);
   const d = new Date(y, m-1+delta, 1);
   currentMonth = ymLocal(d);
-  dayFilter = 0;
+  dayFilter = 0; setQuick('');
   renderAll();
 }
 
@@ -1876,6 +1921,7 @@ function renderAll(){
   renderRingkasan();
   renderTransaksiTab();
   renderAnggaranTab();
+  renderBills();
   renderDataInfo();
   if($('profileSheet').classList.contains('open')) renderProfile();
 }
@@ -1896,6 +1942,7 @@ async function renameAccount(oldName, newName){
   { const i = svAcc().indexOf(oldName); if(i>=0) svAcc()[i] = newName; }
   transactions.forEach(t=>{ if(t.account===oldName) t.account = newName; });
   settings.salaryAllocations.forEach(a=>{ if(a.kind==='transfer' && a.target===oldName) a.target = newName; });
+  bills().forEach(b=>{ if(b.account===oldName) b.account = newName; });
   await saveSettings();
   saveTransactions();
   buildAccountSelect();
@@ -2054,7 +2101,7 @@ $('monthStartSel').addEventListener('change', async e=>{
   currentMonth = periodOf(todayStr()); dayFilter = 0;
   renderAll();
 });
-['dayR','dayT'].forEach(id=> $(id).addEventListener('change', e=>{ dayFilter = Number(e.target.value)||0; renderAll(); }));
+['dayR','dayT'].forEach(id=> $(id).addEventListener('change', e=>{ dayFilter = Number(e.target.value)||0; setQuick(''); renderAll(); }));
 function renderRingkasan(){
   $('monthStartSel').value = String(startDay());
   const monthTx = txForMonth(currentMonth);
@@ -2121,7 +2168,9 @@ function renderRingkasan(){
     if(prevOut>0){ const p=Math.round((outSum-prevOut)/prevOut*100); vs=`<span style="color:var(${p>0?'--expense':'--income'})">${p>0?'▲':p<0?'▼':''} ${Math.abs(p)}%</span>`; }
     const budgetTotal = Object.values(settings.budgets).reduce((sum,b)=>sum+Number(b||0),0);
     const budgetInfo = budgetTotal>0 ? `<span>Sisa anggaran <b style="color:var(${available>=0?'--income':'--expense'})">${fmt(available)}</b></span>` : '';
-    $('rExtra').innerHTML = `<span>Selisih <b style="color:var(${net>=0?'--income':'--expense'})">${net<0?'−':'+'}${fmt(Math.abs(net))}</b></span><span>Rata-rata keluar/hari <b>${fmt(outSum/days)}</b></span><span>Keluar vs bulan lalu <b>${vs}</b></span>${budgetInfo}`;
+    const big = monthTx.filter(t=>!isTransfer(t) && t.type==='keluar').reduce((m,t)=> (!m || Number(t.amount)>Number(m.amount)) ? t : m, null);
+    const bigInfo = big ? `<span>Pengeluaran terbesar <b>${fmt(big.amount)}</b> · ${escapeHtml(big.desc)}</span>` : '';
+    $('rExtra').innerHTML = `<span>Selisih <b style="color:var(${net>=0?'--income':'--expense'})">${net<0?'−':'+'}${fmt(Math.abs(net))}</b></span><span>Rata-rata keluar/hari <b>${fmt(outSum/days)}</b></span><span>Keluar vs bulan lalu <b>${vs}</b></span>${bigInfo}${budgetInfo}`;
   }
 
 
@@ -2205,10 +2254,12 @@ function renderRecentList(){
     syncDayFilter();
     let filteredTx = monthTx;
     if(dayFilter) filteredTx = filteredTx.filter(t=> Number(t.date.slice(8,10))===dayFilter);
+    if(quickRange){ const [qa,qb] = quickBounds(); filteredTx = transactions.filter(t=> t.date>=qa && t.date<=qb); }
     recent = sortTx(filteredTx.filter(t=>!isTransfer(t)));
     $('recentEmpty').textContent = 'Belum ada catatan' + (dayFilter ? ` di tanggal ${dayFilter}.` : ' bulan ini.');
     $('recentTitle').textContent = (dayFilter ? `Catatan tanggal ${dayFilter} ${MONTH_SHORT[(Number(currentMonth.slice(5,7))-1-(startDay()>1&&dayFilter>=startDay()?1:0)+12)%12]}` : 'Catatan bulan ini');
   }
+  if(quickRange && !rq){ $('recentTitle').textContent = quickRange==='today' ? 'Catatan hari ini' : 'Catatan minggu ini'; $('recentEmpty').textContent = quickRange==='today' ? 'Belum ada catatan hari ini.' : 'Belum ada catatan minggu ini.'; }
   $('recentEmpty').style.display = recent.length ? 'none' : 'block';
   $('recentLedger').classList.toggle('grouped', !isAmountSort());
   $('sortR').value = sortMode;
@@ -2559,13 +2610,14 @@ function renderTransaksiTab(){
     list = txForMonth(currentMonth);
     if(dayFilter) list = list.filter(t=> Number(t.date.slice(8,10))===dayFilter);
   }
+  if(quickRange && !q){ const [qa,qb] = quickBounds(); list = transactions.filter(t=> t.date>=qa && t.date<=qb); }
   list = list.filter(t=>!isTransfer(t));
   if(txFilter!=='all') list = list.filter(t=>t.type===txFilter);
   list = sortTx(list);
   $('sortT').value = sortMode;
   if(q) setSearchSummary('searchSummary', list);
   $('emptyState').style.display = list.length ? 'none' : 'block';
-  $('emptyState').textContent = q ? 'Nggak ada catatan yang cocok.' : (dayFilter ? 'Belum ada catatan di tanggal ini.' : 'Belum ada catatan di bulan ini.');
+  $('emptyState').textContent = q ? 'Nggak ada catatan yang cocok.' : (quickRange ? 'Belum ada catatan di rentang ini.' : dayFilter ? 'Belum ada catatan di tanggal ini.' : 'Belum ada catatan di bulan ini.');
   $('ledger').classList.toggle('grouped', !isAmountSort());
   $('ledger').innerHTML = groupedHtml(list, 0, !!q);
   attachDeleteHandlers($('ledger'));
@@ -2611,7 +2663,7 @@ function renderAnggaranTab(){
         </div>
         <div class="budget-track"><div class="budget-fill ${reached?'over':''}" style="width:${pctB}%;${warn&&!reached?'background:#C98A3E;':''}"></div></div>
         <div class="budget-sub">${fmt(collected)} dari ${fmt(budget)} ${reached? '· lewat anggaran' : warn? '· hampir habis' : ''}</div>
-        <div class="budget-date-row">Target tanggal <input type="date" class="budget-date" data-cat="${escapeHtml(cat)}" value="${bDates()[cat]||''}"><span>${(()=>{ const d=bDates()[cat]; if(!d) return ''; const n=Math.ceil((new Date(d+'T00:00:00')-new Date(new Date().toDateString()))/86400000); return n>0? n+' hari lagi' : n===0? 'hari ini' : (reached?'':'lewat '+(-n)+' hari'); })()}</span></div>
+        <div class="budget-date-row">Target tanggal <input type="date" class="budget-date" data-cat="${escapeHtml(cat)}" value="${escapeHtml(bDates()[cat]||'')}"><span>${(()=>{ const d=bDates()[cat]; if(!d) return ''; const n=Math.ceil((new Date(d+'T00:00:00')-new Date(new Date().toDateString()))/86400000); return n>0? n+' hari lagi' : n===0? 'hari ini' : (reached?'':'lewat '+(-n)+' hari'); })()}</span></div>
       </div>`;
   }).join('') : '<div class="empty" style="padding:10px 0;">Belum ada anggaran kategori.</div>';
 
@@ -2749,7 +2801,7 @@ function renderTabungan(monthTx){
           </span>
         </div>${monthPart}${totalPart}
         <div class="budget-date-row">Target total <input type="text" inputmode="numeric" class="saving-total" data-name="${escapeHtml(name)}" value="${formatNum(st.total)}" placeholder="0" style="width:120px;text-align:right;"></div>
-        <div class="budget-date-row">Target tanggal <input type="date" class="saving-date" data-name="${escapeHtml(name)}" value="${d}"><span>${dateInfo}</span></div>
+        <div class="budget-date-row">Target tanggal <input type="date" class="saving-date" data-name="${escapeHtml(name)}" value="${escapeHtml(d)}"><span>${dateInfo}</span></div>
       </div>`;
   }).join('') : '<div class="empty" style="padding:10px 0;">Belum ada tabungan.</div>';
 
@@ -3384,6 +3436,95 @@ function bapaoSVG(){
   const _st=saveTransactions; saveTransactions=function(){ const r=_st.apply(this,arguments); try{ window.bapaoCheer(); }catch(e){} return r; };
 })();
 
+/* V48: chip Hari ini / Minggu ini */
+function quickBounds(){
+  const t = todayStr();
+  if(quickRange==='today') return [t, t];
+  const d = new Date(t+'T00:00:00'), s = new Date(d); s.setDate(d.getDate() - ((d.getDay()+6)%7));
+  const e = new Date(s); e.setDate(s.getDate()+6);
+  const f = x=> ymLocal(x)+'-'+String(x.getDate()).padStart(2,'0');
+  return [f(s), f(e)];
+}
+function setQuick(v){ quickRange = v; document.querySelectorAll('.qseg button').forEach(b=> b.classList.toggle('active', b.dataset.q===v)); }
+document.querySelectorAll('.qseg button').forEach(b=> b.addEventListener('click', ()=>{ setQuick(quickRange===b.dataset.q ? '' : b.dataset.q); renderRecentList(); renderTransaksiTab(); }));
+
+/* V48: tagihan berulang (settings.bills: {id,name,amount,day,account,category,paid:{periode:idCatatan}}) */
+function bills(){ return Array.isArray(settings.bills) ? settings.bills : (settings.bills = []); }
+$('newBillDay').innerHTML = Array.from({length:28},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join('');
+attachThousandFormat($('newBillAmt'));
+function billDue(ym, day){
+  const rg = periodRange(ym);
+  for(let d=new Date(rg.start+'T00:00:00'), e=new Date(rg.end+'T00:00:00'); d<=e; d.setDate(d.getDate()+1)){
+    if(d.getDate()===day) return ymLocal(d)+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  return rg.end;
+}
+const billPaid = (b, ym) => { const id = (b.paid||{})[ym]; return id!==undefined && transactions.some(t=>t.id===id); };
+function renderBills(){
+  const list = bills().filter(b=> b && typeof b==='object');
+  const accSel = $('newBillAcc'), catSel = $('newBillCat'), cs = allCategories();
+  const ak = settings.accounts.join('|'), ck = cs.join('|');
+  if(accSel.dataset.k !== ak){ const v = accSel.value; accSel.innerHTML = settings.accounts.map(a=>`<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join(''); accSel.dataset.k = ak; if(settings.accounts.includes(v)) accSel.value = v; }
+  if(catSel.dataset.k !== ck){ const v = catSel.value; catSel.innerHTML = cs.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join(''); catSel.dataset.k = ck; catSel.value = cs.includes(v) ? v : (cs.includes('Tagihan') ? 'Tagihan' : (cs[0]||'')); }
+
+  $('billManage').innerHTML = list.length ? list.map(b=>`<div class="alloc-row"><div class="info"><div class="lbl">${escapeHtml(b.name)}</div><div class="sub">Tiap tgl ${Number(b.day)||1} · ${escapeHtml(b.account)} · ${escapeHtml(b.category)}</div></div><input type="text" inputmode="numeric" class="alloc-amt bill-amt" data-id="${escapeHtml(b.id)}" value="${formatNum(b.amount)}"><button type="button" class="del" data-id="${escapeHtml(b.id)}" title="Hapus">✕</button></div>`).join('') : '<div class="empty" style="padding:10px 0;">Belum ada tagihan berulang.</div>';
+  $('billManage').querySelectorAll('.bill-amt').forEach(inp=>{
+    const find = ()=> bills().find(x=> x && x.id===inp.dataset.id);
+    const b0 = find();
+    attachConfirmedEdit(inp, { label:`nominal ${b0 ? b0.name : 'tagihan'}`, current: ()=> Number((find()||{}).amount||0), save: async v=>{ const b = find(); if(!b) return; b.amount = v; await saveSettings(); } });
+  });
+  $('billManage').querySelectorAll('.del').forEach(btn=> btn.addEventListener('click', async ()=>{
+    const b = bills().find(x=> x && x.id===btn.dataset.id); if(!b) return;
+    if(!(await confirmDialog({ title:`Hapus tagihan ${b.name}?`, text:'Catatan pembayaran yang sudah dibuat tidak ikut terhapus.', ok:'Hapus', cancel:'Batal' }))) return;
+    settings.bills = bills().filter(x=> x!==b);
+    await saveSettings(); renderAll();
+  }));
+
+  const card = $('billCard');
+  if(!list.length){ card.style.display = 'none'; return; }
+  card.style.display = '';
+  const today = todayStr();
+  const rows = list.map(b=>{
+    const due = billDue(currentMonth, Number(b.day)||1), paid = billPaid(b, currentMonth);
+    return { b, due, paid, n: Math.round((new Date(due+'T00:00:00') - new Date(today+'T00:00:00'))/86400000) };
+  }).sort((x,y)=> (x.paid - y.paid) || x.due.localeCompare(y.due));
+  const unpaid = rows.filter(r=>!r.paid).reduce((s,r)=> s + Number(r.b.amount||0), 0);
+  $('billList').innerHTML = rows.map(r=>{
+    const st = r.paid ? ['Lunas','var(--income)'] : r.n<0 ? [`Telat ${-r.n} hari`,'var(--expense)'] : r.n===0 ? ['Jatuh tempo hari ini','var(--expense)'] : [`${r.n} hari lagi`,'var(--muted)'];
+    const dl = new Date(r.due+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'short'});
+    return `<div class="budget-row"><div class="budget-head"><span class="cat-name">${escapeHtml(r.b.name)}</span><span class="money" style="font-size:14px;font-weight:600;">${fmt(r.b.amount)}</span></div><div class="budget-sub" style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="color:${st[1]}">${st[0]} · ${dl}</span>${r.paid ? '' : `<button type="button" class="restore-btn" data-id="${escapeHtml(r.b.id)}">Bayar</button>`}</div></div>`;
+  }).join('') + (unpaid>0 ? `<div class="budget-sub" style="margin-top:8px;">Belum dibayar: <b class="money">${fmt(unpaid)}</b></div>` : '');
+  $('billList').querySelectorAll('.restore-btn').forEach(btn=> btn.addEventListener('click', ()=> payBill(btn.dataset.id)));
+}
+async function payBill(id){
+  const b = bills().find(x=> x && x.id===id); if(!b) return;
+  const amt = Number(b.amount)||0;
+  if(!amt){ showStatus('Isi nominal tagihan dulu.', true); return; }
+  const acc = settings.accounts.includes(b.account) ? b.account : settings.accounts[0];
+  const ym = currentMonth, date = ym===periodOf(todayStr()) ? todayStr() : billDue(ym, Number(b.day)||1);
+  const after = balOfAcc(acc) - amt;
+  const ok = await confirmDialog({ title:`Bayar ${b.name}?`, text:`Dicatat sebagai pengeluaran ${fmt(amt)} dari ${acc}.` + (after<0 ? ` Saldo ${acc} jadi ${fmtS(after)}.` : ''), ok:'Bayar', cancel:'Batal' });
+  if(!ok) return;
+  const txId = Date.now();
+  transactions.push({ id:txId, type:'keluar', desc:b.name, amount:amt, account:acc, category:b.category||'Tagihan', date });
+  (b.paid || (b.paid = {}))[ym] = txId;
+  await saveTransactions(); await saveSettings(); renderAll();
+  showUndo(`${b.name} dibayar.`, async ()=>{
+    transactions = transactions.filter(t=> t.id!==txId);
+    const bb = bills().find(x=> x && x.id===id); if(bb && bb.paid) delete bb.paid[ym];
+    await saveTransactions(); await saveSettings(); renderAll();
+    showStatus('Pembayaran dibatalkan.');
+  });
+}
+$('addBillBtn').addEventListener('click', async ()=>{
+  const name = $('newBillName').value.trim(), amount = parseNum($('newBillAmt').value);
+  if(!name || !amount){ showStatus('Isi nama dan nominal tagihan.', true); return; }
+  bills().push({ id:'b'+Date.now(), name, amount, day:Number($('newBillDay').value)||1, account:$('newBillAcc').value||settings.accounts[0], category:$('newBillCat').value||'Tagihan' });
+  await saveSettings();
+  $('newBillName').value=''; $('newBillAmt').value='';
+  renderAll(); showStatus(`Tagihan "${name}" ditambahkan.`);
+});
+
 /* V47: menu profil */
 function renderProfile(){
   const email = ($('accountEmail').textContent || '').trim();
@@ -3392,12 +3533,13 @@ function renderProfile(){
   $('pfName').textContent = name;
   $('pfAv').textContent = Array.from(name)[0].toUpperCase();
   $('pfMail').textContent = email && email !== '-' ? email : '';
-  const real = transactions.filter(t=>!isTransfer(t));
+  const real = transactions.filter(t=>!isTransfer(t) && !(t.allocationGroupId!==undefined && !isAllocParent(t)));
   $('pfCount').textContent = real.length.toLocaleString('id-ID');
   const first = real.reduce((m,t)=> (!m || t.date<m) ? t.date : m, '');
   $('pfSince').textContent = first ? MONTH_SHORT[Number(first.slice(5,7))-1] + ' ' + first.slice(0,4) : '-';
-  const days = new Set(real.map(t=>t.date));
   const fd = x=> ymLocal(x) + '-' + String(x.getDate()).padStart(2,'0');
+  // Hari beruntun dihitung dari hari catatan dibuat (id = waktu dibuat), jadi catatan mundur tidak ikut memperpanjang.
+  const days = new Set(real.map(t=> Number(t.id)>1e12 ? fd(new Date(Number(t.id))) : t.date));
   const cur = new Date(); if(!days.has(fd(cur))) cur.setDate(cur.getDate()-1);
   let streak = 0; while(days.has(fd(cur))){ streak++; cur.setDate(cur.getDate()-1); }
   $('pfStreak').textContent = streak;
@@ -3422,7 +3564,7 @@ $('pfLogout').addEventListener('click', async ()=>{
   closeSheet();
   if(auth) auth.signOut();
 });
-document.addEventListener('keydown', e=>{ if(e.key==='Escape' && $('profileSheet').classList.contains('open')) closeSheet(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && $('profileSheet').classList.contains('open') && !document.querySelector('.dlg-bg')) closeSheet(); });
 </script>
 </body>
 </html>
