@@ -501,9 +501,9 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
 .bp-svgbox{position:relative; width:84px; height:94px; cursor:pointer; pointer-events:auto; -webkit-tap-highlight-color:transparent;}
 .bp-svgbox svg{width:100%; height:100%; overflow:visible;}
 .bp-svgbox.poke{animation:bpJump .5s cubic-bezier(.3,1.6,.5,1);}
-.bp-bubble{position:absolute; right:calc(100% + 6px); bottom:44px; width:max-content; max-width:176px; background:var(--sheet); color:var(--ink); border:1px solid var(--line); border-radius:16px; padding:8px 11px; font-size:12px; font-weight:600; line-height:1.4; box-shadow:0 8px 22px var(--shadow); opacity:0; transform:translateY(6px) scale(.95); transition:opacity .25s,transform .25s; pointer-events:none;}
+.bp-bubble{position:absolute; right:0; bottom:calc(100% + 2px); width:max-content; max-width:min(190px,64vw); background:var(--sheet); color:var(--ink); border:1px solid var(--line); border-radius:16px; padding:8px 11px; font-size:12px; font-weight:600; line-height:1.4; box-shadow:0 8px 22px var(--shadow); opacity:0; transform:translateY(6px) scale(.95); transition:opacity .25s,transform .25s; pointer-events:none;}
 .bp-bubble.on{opacity:1; transform:none;}
-.bp-bubble::after{content:''; position:absolute; right:-6px; bottom:12px; width:11px; height:11px; background:var(--sheet); border-right:1px solid var(--line); border-top:1px solid var(--line); transform:rotate(45deg);}
+.bp-bubble::after{content:''; position:absolute; right:30px; bottom:-6px; width:11px; height:11px; background:var(--sheet); border-right:1px solid var(--line); border-bottom:1px solid var(--line); transform:rotate(45deg);}
 .bp .f,.bp .p{display:none;}
 .s-dance .f-dance,.s-tired .f-tired,.s-sleep .f-sleep,.s-eat .f-eat,.s-drink .f-drink,.s-wake .f-wake,.s-eat .p-eat,.s-drink .p-drink{display:inline;}
 .bp-g{transform-origin:50px 100px;} .bp-armL{transform-origin:27px 58px;} .bp-armR{transform-origin:73px 58px;}
@@ -552,6 +552,22 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
 .swt-w.on{color:var(--ink);}
 .swt.custom{background:conic-gradient(#f43f5e,#f59e0b,#10b981,#06b6d4,#6366f1,#ec4899,#f43f5e);}
 .swt-w input[type=color]{position:absolute; top:0; left:50%; width:46px; height:46px; margin-left:-23px; opacity:0; cursor:pointer; padding:0; border:none;}
+/* Perapihan teks: tidak ada yang keluar dari kartu */
+.balance{font-size:clamp(26px,9vw,34px); max-width:100%; overflow-wrap:anywhere;}
+.month-stats{flex-wrap:wrap; gap:4px 20px;}
+.month-stats .stat{min-width:0;}
+.pie-wrap{min-width:0;}
+.pie-legend{min-width:0;}
+.pie-legend .item{min-width:0;}
+.pie-legend .lbl{min-width:0;}
+.pie-legend .num{display:flex; flex-direction:column; align-items:flex-end; line-height:1.25; flex-shrink:0;}
+.pie-legend .num .val{font-size:12px;}
+.pie-legend .num .pct{min-width:0; font-size:11px; color:var(--muted);}
+@media (max-width:420px){
+  .pie-wrap{gap:12px;}
+  .pie-box,.pie-chart{width:112px!important; height:112px!important;}
+  .pie-center b{font-size:16px;}
+}
 </style>
 </head>
 <body>
@@ -957,6 +973,24 @@ paintTheme();
 function syncAllocCheck(){ $('allocCheckRow').style.display = (currentType==='masuk' && settings.salaryAllocations.length) ? 'flex' : 'none'; }
 function rebuildUI(){ buildAccountSelect(); buildCategoryList(); buildAllocTargetSelect(); renderAllocList(); syncAllocCheck(); renderAll(); }
 const fmt = n => 'Rp ' + Math.round(n||0).toLocaleString('id-ID');
+/* Saldo total: animasi hitung naik hanya kalau angkanya benar-benar berubah, dan selalu berakhir di angka asli. */
+let _balCur = null, _balRaf = 0;
+function setBalance(total){
+  const el = $('totalBalance'); if(!el) return;
+  cancelAnimationFrame(_balRaf);
+  const to = Math.round(total||0);
+  const from = _balCur === null ? 0 : _balCur;
+  const paint = v => { _balCur = v; el.textContent = fmt(v); };
+  const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(from === to || calm){ paint(to); return; }
+  const t0 = performance.now(), d = 600;
+  const step = n => {
+    const k = Math.min(1, (n - t0) / d), e = 1 - Math.pow(1 - k, 3);
+    paint(k < 1 ? Math.round(from + (to - from) * e) : to);
+    if(k < 1) _balRaf = requestAnimationFrame(step);
+  };
+  _balRaf = requestAnimationFrame(step);
+}
 function ymLocal(d){
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
 }
@@ -1382,14 +1416,24 @@ $('importFile').addEventListener('change', e=>{
   reader.onload = async () => {
     try{
       const data = JSON.parse(reader.result);
-      if(!data || !Array.isArray(data.transactions) || typeof data.settings !== 'object'){
+      if(!data || !Array.isArray(data.transactions) || !data.settings || typeof data.settings !== 'object' || Array.isArray(data.settings)){
         showStatus('File tidak valid.', true);
         return;
       }
-      const replace = await confirmDialog({ title:'Impor data?', text:'Impor akan mengganti semua data yang ada di perangkat ini dengan isi file. Kondisi sekarang tetap tersimpan di cadangan lokal.', ok:'Ganti data', cancel:'Batal' });
+      // Cek bentuk tiap catatan: tipe, nominal, tanggal, akun. Yang rusak dilewati.
+      const okTx = t => t && typeof t==='object' && (t.type==='masuk' || t.type==='keluar') && Number.isFinite(Number(t.amount)) && Number(t.amount)>=0 && /^\d{4}-\d{2}-\d{2}$/.test(String(t.date||'')) && typeof t.account==='string' && t.account.trim()!=='';
+      const good = data.transactions.filter(okTx), badN = data.transactions.length - good.length;
+      if(!good.length && data.transactions.length){ showStatus('Semua catatan di file rusak, impor dibatalkan.', true); return; }
+      const replace = await confirmDialog({ title:'Impor data?', text:`Impor akan mengganti semua data yang ada di perangkat ini dengan isi file (${good.length} catatan${badN?`, ${badN} catatan rusak dilewati`:''}). Kondisi sekarang tetap tersimpan di cadangan lokal.`, ok:'Ganti data', cancel:'Batal' });
       if(!replace) return;
-      transactions = data.transactions;
-      settings = { accounts:[...DEFAULT_ACCOUNTS], budgets:{}, savings:{}, savingAccounts:[], initialBalances:{}, salaryAllocations:DEFAULT_ALLOCATIONS.map(a=>({...a})), hiddenCategories: [], lastExportAt: null, ...data.settings };
+      const usedIds = new Set(); let nid = Date.now();
+      transactions = good.map(t=>{ const c = {...t, amount:Number(t.amount)}; if(c.id===undefined || c.id===null || usedIds.has(c.id)) c.id = nid++; usedIds.add(c.id); return c; });
+      const ds = data.settings;
+      settings = { accounts:[...DEFAULT_ACCOUNTS], budgets:{}, savings:{}, savingAccounts:[], initialBalances:{}, salaryAllocations:DEFAULT_ALLOCATIONS.map(a=>({...a})), hiddenCategories: [], lastExportAt: null, ...ds };
+      const isObj = o => o && typeof o==='object' && !Array.isArray(o);
+      if(!Array.isArray(settings.accounts) || !settings.accounts.length || !settings.accounts.every(a=>typeof a==='string' && a)) settings.accounts = [...DEFAULT_ACCOUNTS];
+      ['budgets','savings','initialBalances'].forEach(k=>{ if(!isObj(settings[k])) settings[k] = {}; });
+      ['savingAccounts','salaryAllocations','hiddenCategories'].forEach(k=>{ if(!Array.isArray(settings[k])) settings[k] = k==='salaryAllocations' ? [] : []; });
       saveTransactions();
       saveSettings();
       rebuildUI();
@@ -1433,8 +1477,9 @@ document.querySelectorAll('.toggle button').forEach(btn=>{
 });
 
 function buildAccountSelect(){
-  const sel = $('account');
+  const sel = $('account'), keep = sel.value;
   sel.innerHTML = settings.accounts.map(a=>`<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join('');
+  if(keep && settings.accounts.includes(keep)) sel.value = keep;
 }
 function buildCategoryList(){
   const cats = allCategories();
@@ -1765,7 +1810,7 @@ function renderAccounts(){
     balances[t.account] += t.type==='masuk' ? Number(t.amount) : -Number(t.amount);
   });
   const total = Object.values(balances).reduce((a,b)=>a+b,0);
-  $('totalBalance').textContent = fmt(total);
+  setBalance(total);
   $('accountsRow').innerHTML = Object.entries(balances).map(([name,val])=>
     `<div class="acc-chip${isSavingAcc(name)?' is-saving':''}">${isSavingAcc(name)?`<button type="button" class="acc-del" data-acc="${escapeHtml(name)}" title="Hapus akun tabungan ini">✕</button>`:''}<span class="n" contenteditable="true" spellcheck="false" data-acc="${escapeHtml(name)}">${escapeHtml(name)}</span><input type="text" inputmode="numeric" class="bal-input" data-acc="${escapeHtml(name)}" value="${formatNum(val)}"></div>`
   ).join('');
@@ -2003,7 +2048,7 @@ function renderRingkasan(){
     const totals = Object.entries(isOut ? catTotals : inCatTotals).sort((a,b)=>b[1]-a[1]);
     const sum = isOut ? outSum : inSum;
     const acc0 = (getComputedStyle(document.documentElement).getPropertyValue('--accent')||'').trim() || '#10b981';
-    const palette = isOut ? [acc0, ...PIE_COLORS.slice(1)] : PIE_COLORS_IN;
+    const palette = pieColors(totals.length, isOut ? PIE_COLORS : PIE_COLORS_IN, isOut ? acc0 : null);
     $('catEmpty').textContent = isOut ? 'Belum ada pengeluaran bulan ini.' : 'Belum ada pemasukan bulan ini.';
     $('catEmpty').style.display = totals.length ? 'none' : 'block';
     $('pieWrap').style.display = totals.length ? 'flex' : 'none';
@@ -2011,8 +2056,9 @@ function renderRingkasan(){
       let acc = 0;
       const segs = totals.map(([name,val],i)=>{
         const start = acc/sum*360; acc += val;
-        return {name, val, color:palette[i % palette.length], start, end:acc/sum*360};
+        return {name, val, color:palette[i], start, end:acc/sum*360};
       });
+      const pcts = pctList(segs.map(g=>g.val));
       const pc = $('pieChart');
       if(!$('pieCenter')){ const box=document.createElement('div'); box.className='pie-box'; pc.parentNode.insertBefore(box,pc); box.appendChild(pc); const c=document.createElement('div'); c.id='pieCenter'; c.className='pie-center'; box.appendChild(c); }
       $('pieCenter').innerHTML = `<small>Total ${isOut?'keluar':'masuk'}</small><b>${compactRp(sum)}</b>`;
@@ -2020,9 +2066,8 @@ function renderRingkasan(){
       $('pieLegend').innerHTML = segs.map(g=>`
         <div class="item">
           <span class="sw" style="background:${g.color};"></span>
-          <span class="lbl">${catIcon(g.name)} ${escapeHtml(g.name)}</span>
-          <span class="val">${fmt(g.val)}</span>
-          <span class="pct">${Math.round(g.val/sum*100)}%</span>
+          <span class="lbl" title="${escapeHtml(g.name)}">${catIcon(g.name)} ${escapeHtml(g.name)}</span>
+          <span class="num"><span class="val">${fmt(g.val)}</span><span class="pct">${pcts[segs.indexOf(g)]||'<1'}%</span></span>
         </div>`).join('');
     }
   }
@@ -2070,7 +2115,25 @@ function renderRecentList(){
   attachDeleteHandlers($('recentLedger'));
 }
 const PIE_COLORS_IN = ['#34d399','#2dd4bf','#a3e635','#38bdf8','#fbbf24','#86efac','#5eead4','#bef264'];
-const PIE_COLORS = ['#7c6cff','#f472b6','#34d399','#fbbf24','#38bdf8','#fb7185','#a78bfa','#2dd4bf'];
+const PIE_COLORS = ['#7c6cff','#f472b6','#fbbf24','#38bdf8','#fb923c','#a3e635','#2dd4bf','#c084fc','#f87171','#94a3b8'];
+// Warna donat: tidak ada yang kembar (warna aksen dihindari, sisanya dibuat otomatis kalau kategori > daftar warna).
+function pieColors(n, base, first){
+  const rgb = h => [1,3,5].map(i=>parseInt(h.substr(i,2),16));
+  const far = (a,b)=>{ const x=rgb(a), y=rgb(b); return Math.hypot(x[0]-y[0],x[1]-y[1],x[2]-y[2]) > 90; };
+  const hex = /^#[0-9a-f]{6}$/i.test(first||'');
+  const out = hex ? [first] : [];
+  base.forEach(c=>{ if(!hex || far(first,c)) out.push(c); });
+  for(let i=out.length; i<n; i++) out.push('hsl('+((i*47+20)%360)+' 68% 62%)');
+  return out;
+}
+// Persentase yang dibulatkan tapi totalnya tetap 100%.
+function pctList(vals){
+  const sum = vals.reduce((a,b)=>a+b,0) || 1;
+  const raw = vals.map(v=>v/sum*100), fl = raw.map(Math.floor);
+  let rest = 100 - fl.reduce((a,b)=>a+b,0);
+  raw.map((r,i)=>[r-fl[i],i]).sort((a,b)=>b[0]-a[0]).forEach(([,i])=>{ if(rest>0){ fl[i]++; rest--; } });
+  return fl;
+}
 function catIcon(c){
   const s = String(c||'').toLowerCase();
   const M = [[/makan|minum|jajan|kuliner|resto|kopi/,'🍜'],[/transport|bensin|ojek|parkir|bbm|kendara/,'🚗'],[/kontrak|sewa|rumah|kost|\bkos\b/,'🏠'],[/internet|wifi|pulsa|paket data/,'📶'],[/listrik|pln|pdam|tagihan|cicil|utilit/,'💡'],[/belanja|market|toko/,'🛍️'],[/hibur|game|film|nonton|wisata|liburan/,'🎬'],[/sehat|obat|dokter|medis|apotek/,'💊'],[/didik|sekolah|kuliah|buku|kursus/,'🎓'],[/gaji|upah|salary|lembur/,'💰'],[/bonus|hadiah|thr/,'🎁'],[/tabung|darurat|invest|saham|emas/,'🏦'],[/anak|bayi|susu|popok/,'👶'],[/sedekah|zakat|donasi|infaq|amal/,'🤲'],[/alokasi|pindah/,'⇄']];
@@ -2963,24 +3026,6 @@ if(!auth){
   showStatus('Firebase gagal dimuat. Mode offline: data hanya tersimpan di HP ini.', true, true);
 }
 
-/* V39: angka saldo menghitung naik saat berubah */
-(function(){
-  const el=document.querySelector('.balance'); if(!el) return;
-  let busy=false, last=null, raf=0;
-  new MutationObserver(()=>{
-    if(busy) return;
-    const txt=el.textContent, m=txt.match(/^(.*?)(-?)([\d.]+)(.*)$/); if(!m) return;
-    const to=parseInt(m[3].replace(/\./g,''),10)*(m[2]?-1:1);
-    if(isNaN(to)){return;}
-    const from=last===null?0:last; last=to; if(from===to) return;
-    cancelAnimationFrame(raf); const t0=performance.now(), d=700;
-    const step=n=>{ const k=Math.min(1,(n-t0)/d), e=1-Math.pow(1-k,3), v=Math.round(from+(to-from)*e);
-      busy=true; el.textContent=m[1]+(v<0?'-':'')+Math.abs(v).toLocaleString('id-ID')+m[4]; busy=false;
-      if(k<1) raf=requestAnimationFrame(step); };
-    raf=requestAnimationFrame(step);
-  }).observe(el,{childList:true,characterData:true,subtree:true});
-})();
-
 /* V41: ketik cepat ("kopi 18rb belanja") mengisi form otomatis */
 (function(){
   const inp=$('quickIn'), btn=$('quickBtn'); if(!inp||!btn) return;
@@ -3030,12 +3075,12 @@ if(!auth){
       + `<label class="swt-w${l.p==='custom'?' on':''}" style="--a:${l.c||'#888888'};--b:${l.c||'#888888'}"><span class="swt custom"></span>Pilih<input type="color" id="lookCustom" value="${l.c||'#10b981'}"></label>`;
     sw.querySelectorAll('button[data-p]').forEach(b=>b.addEventListener('click',()=>save({p:b.dataset.p})));
     const ci=$('lookCustom'); ci.addEventListener('input',()=>{ const l2=Object.assign(BK_look(),{p:'custom',c:ci.value}); try{localStorage.setItem('buku-kas-look',JSON.stringify(l2));}catch(e){} BK_apply(l2); });
-    ci.addEventListener('change',()=>{ paint(); if(typeof rebuildUI==='function') rebuildUI(); });
+    ci.addEventListener('change',()=>{ paint(); if(typeof renderAll==='function') renderAll(); });
   }
   function save(patch){
     const l=Object.assign(BK_look(),patch);
     try{localStorage.setItem('buku-kas-look',JSON.stringify(l));}catch(e){}
-    BK_apply(l); paint(); if(typeof rebuildUI==='function') rebuildUI();
+    BK_apply(l); paint(); if(typeof renderAll==='function') renderAll();
   }
   document.querySelectorAll('#modeSeg button').forEach(b=>b.addEventListener('click',()=>save({m:b.dataset.m})));
   BK_apply(); paint();
@@ -3088,7 +3133,7 @@ function renderMascot(){
   if(!tx.length){ mood='sleep'; msg='Zzz… belum ada catatan bulan ini. Yuk catat yang pertama, ketuk tombol +!'; }
   else if(outS>inS && inS>0){ mood='worry'; msg='Waduh, pengeluaran bulan ini lebih besar dari pemasukan. Rem dulu ya!'; }
   else if(inS>0 && (inS-outS)/inS>=0.3){ mood='party'; msg='Hore! Kamu berhasil menyisihkan '+Math.round((inS-outS)/inS*100)+'% dari pemasukan bulan ini.'; }
-  else if(outS>0){ msg='Pengeluaran bulan ini Rp '+fmt(outS)+'. Tetap semangat nyatat, ya!'; }
+  else if(outS>0){ msg='Pengeluaran bulan ini '+fmt(outS)+'. Tetap semangat nyatat, ya!'; }
   else { msg='Pemasukan sudah masuk. Jangan lupa catat pengeluaranmu juga!'; }
   if(box.dataset.mood!==mood){ box.innerHTML=mascot(mood); box.dataset.mood=mood; }
   bub.textContent=msg;
@@ -3138,7 +3183,9 @@ function bapaoSVG(){
   };
   const cheer=['Mantap! Tercatat. Aku joget dulu 💃','Yeay, satu catatan lagi!','Rajin banget! Hadiahnya joget gratis.','Catatan aman, dompet makin jelas!'];
   let st='dance', idx=0, timer=null, bubT=null;
-  function say(t,ms){ bub.textContent=t; bub.classList.add('on'); clearTimeout(bubT); bubT=setTimeout(()=>bub.classList.remove('on'),ms||4500); }
+  const onSettings=()=>{ const t=document.querySelector('.tab.active'); return !!t && t.dataset.view==='lainnya'; };
+  function say(t,ms){ bub.textContent=t; clearTimeout(bubT); if(onSettings()){ bub.classList.remove('on'); return; } bub.classList.add('on'); bubT=setTimeout(()=>bub.classList.remove('on'),ms||4500); }
+  document.querySelectorAll('.tab').forEach(tb=>tb.addEventListener('click',()=>{ if(onSettings()) bub.classList.remove('on'); }));
   function setS(s,msg){ st=s; svg.setAttribute('class','bp s-'+s); say(msg||pick(L[s])); }
   const seq=[()=>['dance',rnd(18000,32000)],()=>['tired',5500],()=>['sleep',rnd(14000,22000)],()=>['wake',3200],()=>[Math.random()<.5?'eat':'drink',9500]];
   function run(){ clearTimeout(timer); const x=seq[idx%seq.length](); idx++; setS(x[0]); timer=setTimeout(run,x[1]); }
