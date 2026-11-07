@@ -292,8 +292,8 @@ BK_apply();
   .pie-legend .pct{min-width:34px; text-align:right;}
   .row .field{min-width:0;}
   input[type="date"]{display:block; width:100%; min-width:0; max-width:100%; -webkit-appearance:none; appearance:none; height:40px; text-align:left;}
-  #entryForm,#transferForm{position:fixed; left:50%; bottom:0; width:100%; max-width:480px; margin:0; z-index:60; border-radius:18px 18px 0 0; max-height:90vh; overflow-y:auto; padding-bottom:calc(18px + env(safe-area-inset-bottom,0px)); transform:translate(-50%,110%); transition:transform .25s; box-shadow:0 -10px 30px rgba(0,0,0,.3);}
-  #entryForm.open,#transferForm.open{transform:translate(-50%,0);}
+  #entryForm,#transferForm,#profileSheet{position:fixed; left:50%; bottom:0; width:100%; max-width:480px; margin:0; z-index:60; border-radius:18px 18px 0 0; max-height:90vh; overflow-y:auto; padding-bottom:calc(18px + env(safe-area-inset-bottom,0px)); transform:translate(-50%,110%); transition:transform .25s; box-shadow:0 -10px 30px rgba(0,0,0,.3);}
+  #entryForm.open,#transferForm.open,#profileSheet.open{transform:translate(-50%,0);}
   .sheet-bg{position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:59; opacity:0; pointer-events:none; transition:opacity .2s;}
   .sheet-bg.open{opacity:1; pointer-events:auto;}
   .fab{position:fixed; right:max(18px, calc(50% - 222px)); bottom:calc(22px + env(safe-area-inset-bottom,0px)); width:56px; height:56px; border-radius:50%; border:none; background:var(--ink); color:var(--paper); font-size:30px; line-height:1; z-index:50; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.35);}
@@ -441,8 +441,8 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
 .view.active{animation:viewIn .35s cubic-bezier(.2,.8,.2,1);}
 .view.active>.card{animation:rise .55s cubic-bezier(.2,.8,.2,1) both;}
 .view.active>.card:nth-child(2){animation-delay:.06s}.view.active>.card:nth-child(3){animation-delay:.12s}.view.active>.card:nth-child(4){animation-delay:.18s}.view.active>.card:nth-child(n+5){animation-delay:.24s}
-#entryForm,#transferForm{background:var(--sheet)!important; border:1px solid rgba(var(--w),.1)!important; border-bottom:none!important; border-radius:28px 28px 0 0!important; backdrop-filter:none; transition:transform .38s cubic-bezier(.2,.9,.25,1)!important;}
-#entryForm::before,#transferForm::before{content:''; display:block; width:40px; height:4px; border-radius:4px; background:rgba(var(--w),.2); margin:0 auto 14px;}
+#entryForm,#transferForm,#profileSheet{background:var(--sheet)!important; border:1px solid rgba(var(--w),.1)!important; border-bottom:none!important; border-radius:28px 28px 0 0!important; backdrop-filter:none; transition:transform .38s cubic-bezier(.2,.9,.25,1)!important;}
+#entryForm::before,#transferForm::before,#profileSheet::before{content:''; display:block; width:40px; height:4px; border-radius:4px; background:rgba(var(--w),.2); margin:0 auto 14px;}
 .dlg{background:var(--sheet)!important; border:1px solid rgba(var(--w),.1); border-radius:22px!important; animation:rise .3s both;}
 .dlg-bg{background:rgba(5,5,15,.65)!important; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);}
 .sheet-bg{-webkit-backdrop-filter:blur(5px); backdrop-filter:blur(5px);}
@@ -591,6 +591,17 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
 @keyframes hdrSpin{to{transform:rotate(360deg)}}
 body.hide-money .balance,body.hide-money .acc-chip input.bal-input{filter:blur(9px); pointer-events:none; -webkit-user-select:none; user-select:none;}
 #nickIn{width:100%;}
+#profileSheet{padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px)); color:var(--ink);}
+.pf-top{display:flex; align-items:center; gap:14px; margin-bottom:4px;}
+.pf-av{width:58px; height:58px; border-radius:50%; display:grid; place-items:center; flex-shrink:0; font-size:25px; font-weight:800; color:var(--on); background:linear-gradient(135deg,var(--accent),var(--accent2)); box-shadow:0 6px 16px rgba(var(--ar),.4);}
+.pf-id{min-width:0;}
+.pf-name{font-size:19px; font-weight:800; letter-spacing:-.01em; line-height:1.2; overflow-wrap:anywhere;}
+.pf-mail{font-size:12.5px; color:var(--muted); margin-top:3px; overflow-wrap:anywhere;}
+.pf-stats{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:16px 0 12px;}
+.pf-stats>div{background:rgba(var(--w),.06); border:1px solid var(--line); border-radius:16px; padding:11px 6px; text-align:center; min-width:0;}
+.pf-stats b{display:block; font-size:16px; font-weight:800; white-space:nowrap;}
+.pf-stats span{font-size:11px; color:var(--muted);}
+@supports (-webkit-touch-callout:none){ input,select,textarea{font-size:16px!important;} }
 </style>
 </head>
 <body>
@@ -618,6 +629,7 @@ body.hide-money .balance,body.hide-money .acc-chip input.bal-input{filter:blur(9
       <div class="hdr-btns">
         <button type="button" id="refreshBtn" class="hdr-btn" aria-label="Segarkan data" title="Segarkan data"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></button>
         <button type="button" id="hideBalBtn" class="hdr-btn" aria-label="Sembunyikan saldo" aria-pressed="false" title="Sembunyikan saldo"></button>
+        <button type="button" id="profileBtn" class="hdr-btn" aria-label="Profil" title="Profil"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
       </div>
     </div>
     <div class="label">Total saldo</div>
@@ -881,9 +893,7 @@ body.hide-money .balance,body.hide-money .acc-chip input.bal-input{filter:blur(9
   <div class="view" id="view-lainnya">
     <div class="card" id="lookCard">
       <h3>Tampilan</h3>
-      <div class="look-lbl" style="margin-top:0;">Nama panggilan (untuk sapaan di atas)</div>
-      <input type="text" id="nickIn" maxlength="24" placeholder="mis. Taupik" autocomplete="off">
-      <div class="look-lbl">Mode</div>
+      <div class="look-lbl" style="margin-top:0;">Mode</div>
       <div class="mode-seg" id="modeSeg"><button type="button" data-m="dark">Gelap</button><button type="button" data-m="light">Terang</button></div>
       <div class="look-lbl">Warna aksen</div>
       <div class="sw-row" id="lookSw"></div>
@@ -956,13 +966,29 @@ body.hide-money .balance,body.hide-money .acc-chip input.bal-input{filter:blur(9
   <button type="submit" class="submit" id="trSubmit">Pindahkan</button>
   <button type="button" class="submit outline" id="trCancel">Batal</button>
 </form>
+<div id="profileSheet" role="dialog" aria-modal="true" aria-label="Profil">
+  <div class="pf-top">
+    <div class="pf-av" id="pfAv">?</div>
+    <div class="pf-id"><div class="pf-name" id="pfName">-</div><div class="pf-mail" id="pfMail">-</div></div>
+  </div>
+  <div class="look-lbl">Nama panggilan (untuk sapaan di beranda)</div>
+  <input type="text" id="nickIn" maxlength="24" placeholder="mis. Taupik" autocomplete="off">
+  <div class="pf-stats">
+    <div><b id="pfCount">0</b><span>Catatan</span></div>
+    <div><b id="pfSince">-</b><span>Mulai mencatat</span></div>
+    <div><b id="pfStreak">0</b><span>Hari beruntun</span></div>
+  </div>
+  <div class="hint-text" id="pfBackup" style="margin-bottom:10px;"></div>
+  <button type="button" class="submit outline" id="pfExport" style="margin-top:0;">Ekspor cadangan</button>
+  <button type="button" class="submit outline" id="pfLogout">Keluar</button>
+</div>
 <div class="status-bar" id="statusBar"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <script>
-/* Buku Kas - tampilan minimalis. V44: Bapao si bakpao joget. V43: maskot kucing koin. V42: menu tampilan (mode + warna aksen), default hijau zamrud. V41: ketik cepat + grafik. V40: donat + ikon kategori. V39: tampilan baru gelap-ungu, menu bawah, animasi. V38: salinan satu arah ke Google Sheets (opsional, lewat Apps Script). V37: data yang dihapus nggak hidup lagi dari cloud (simpan tanpa merge), konfirmasi ganti nama akun, peringatan saldo minus di semua pengeluaran (baru & edit). V36: peringatan ukuran data (batas dokumen cloud), peringatan saldo minus saat pindah saldo, setoran bulanan yang dibutuhkan untuk target tabungan, grafik saldo dari waktu ke waktu, urutkan catatan berdasarkan nominal terbesar/terkecil. V35: perubahan saat offline ikut terlindungi dari timpaan cloud, konfirmasi hapus gaji/alokasi, semua konfirmasi pakai dialog aplikasi, pindah saldo bisa diedit. V34: pencarian di Ringkasan (sama seperti tab Transaksi) + tombol ✕ hapus tulisan di kolom cari. V33: sinkron cloud tidak menimpa perubahan yang belum terkirim, 5 cadangan lokal, filter periode saat mencari, kategori tersembunyi bisa ditampilkan, Lihat semua riwayat pindah saldo. Dasar: V28. Baru: menu Tabungan di tab Anggaran (tiap tabungan = akun, di atas Dana Pribadi), tombol Lupa kata sandi di form login. */
+/* Buku Kas - tampilan minimalis. V47: menu profil (ikon orang di header: nama panggilan, email, statistik, backup, keluar). V46: impor JSON tidak membawa alamat/token Sheets dari file, ketik cepat lebih akurat, form tidak menutup sendiri kalau isian belum valid, impor CSV mempertahankan pasangan pindah saldo + ekspor CSV aman dari formula injection, pencarian tahan catatan tanpa keterangan/kategori, filter Tren kategori tidak lagi memfilter Catatan bulan ini, font input 16px di iPhone. V44: Bapao si bakpao joget. V43: maskot kucing koin. V42: menu tampilan (mode + warna aksen), default hijau zamrud. V41: ketik cepat + grafik. V40: donat + ikon kategori. V39: tampilan baru gelap-ungu, menu bawah, animasi. V38: salinan satu arah ke Google Sheets (opsional, lewat Apps Script). V37: data yang dihapus nggak hidup lagi dari cloud (simpan tanpa merge), konfirmasi ganti nama akun, peringatan saldo minus di semua pengeluaran (baru & edit). V36: peringatan ukuran data (batas dokumen cloud), peringatan saldo minus saat pindah saldo, setoran bulanan yang dibutuhkan untuk target tabungan, grafik saldo dari waktu ke waktu, urutkan catatan berdasarkan nominal terbesar/terkecil. V35: perubahan saat offline ikut terlindungi dari timpaan cloud, konfirmasi hapus gaji/alokasi, semua konfirmasi pakai dialog aplikasi, pindah saldo bisa diedit. V34: pencarian di Ringkasan (sama seperti tab Transaksi) + tombol ✕ hapus tulisan di kolom cari. V33: sinkron cloud tidak menimpa perubahan yang belum terkirim, 5 cadangan lokal, filter periode saat mencari, kategori tersembunyi bisa ditampilkan, Lihat semua riwayat pindah saldo. Dasar: V28. Baru: menu Tabungan di tab Anggaran (tiap tabungan = akun, di atas Dana Pribadi), tombol Lupa kata sandi di form login. */
 const DEFAULT_ACCOUNTS = ['Dana Darurat','Uang Tabungan','Uang Belanja','Dana Pribadi'];
 const DEFAULT_CATEGORIES = ['Gaji','Kontrakan','Internet','Makan','Transport','Belanja','Tagihan','Hiburan','Kesehatan','Pendidikan','Lainnya'];
 const RENAME_MAP = {
@@ -1343,11 +1369,12 @@ $('exportBtn').addEventListener('click', ()=>{
   markExported('Data berhasil diekspor.');
 });
 $('exportCsvBtn').addEventListener('click', ()=>{
-  const header = ['Tanggal','Tipe','Keterangan','Jumlah','Akun','Kategori'];
-  const csvEsc = v => `"${String(v).replace(/"/g,'""')}"`;
+  const header = ['Tanggal','Tipe','Keterangan','Jumlah','Akun','Kategori','ID','ID Pindah','ID Grup'];
+  // Sel berawalan = + - @ (atau tab/CR) diberi ' di depan supaya Excel/Sheets tidak menjalankannya sebagai rumus. Impor CSV membuang ' itu lagi.
+  const csvEsc = v => { let x = String(v ?? ''); if(/^[=+\-@\t\r]/.test(x)) x = "'" + x; return `"${x.replace(/"/g,'""')}"`; };
   const rows = [...transactions]
     .sort((a,b)=> a.date.localeCompare(b.date) || a.id-b.id)
-    .map(t=> [t.date, t.type==='masuk'?'Masuk':'Keluar', t.desc, t.amount, t.account, t.category].map(csvEsc).join(','));
+    .map(t=> [t.date, t.type==='masuk'?'Masuk':'Keluar', t.desc, t.amount, t.account, t.category, t.id, t.transferId||'', t.allocationGroupId===undefined?'':t.allocationGroupId].map(csvEsc).join(','));
   const csv = '\uFEFF' + [header.map(csvEsc).join(','), ...rows].join('\r\n');
   downloadFile(`buku-kas-${todayStr()}.csv`, csv, 'text/csv;charset=utf-8;');
   markExported('CSV berhasil diekspor.');
@@ -1410,12 +1437,19 @@ $('importCsvFile').addEventListener('change', e=>{
       const rows = parseCSV(String(reader.result));
       const head = (rows.shift()||[]).map(x=>x.trim().toLowerCase());
       const col = (...names)=> head.findIndex(x=>names.includes(x));
-      const ix = {date:col('tanggal','date'), type:col('tipe','type','jenis'), desc:col('keterangan','deskripsi','desc','description'), amt:col('jumlah','nominal','amount'), acc:col('akun','account'), cat:col('kategori','category')};
+      const ix = {date:col('tanggal','date'), type:col('tipe','type','jenis'), desc:col('keterangan','deskripsi','desc','description'), amt:col('jumlah','nominal','amount'), acc:col('akun','account'), cat:col('kategori','category'), id:col('id'), tr:col('id pindah','transferid'), grp:col('id grup','allocationgroupid')};
       if(ix.date<0 || ix.amt<0){ showStatus('Header CSV harus punya kolom Tanggal dan Jumlah.', true); return; }
       const key = t=> [t.date,t.type,t.desc,Number(t.amount),t.account,t.category].join('|');
-      const seen = new Set(transactions.map(key));
+      // Catatan yang sudah ada dihitung per kunci, jadi dua baris kembar di file (mis. dua kopi di hari yang sama) tidak dianggap duplikat satu sama lain.
+      const pool = new Map();
+      transactions.forEach(t=>{ const k = key(t); if(!pool.has(k)) pool.set(k, []); pool.get(k).push(t); });
+      const unq = v => String(v||'').trim().replace(/^'(?=[=+\-@\t\r])/, '');
+      const cell = i => i>=0 ? String(r_[i]===undefined ? '' : r_[i]).trim() : '';
+      let r_ = [];
       const fresh=[]; let dup=0, bad=0, unknownAcc=0;
+      const idMap = {}, trMap = {};
       rows.forEach(r=>{
+        r_ = r;
         const date = normDate(r[ix.date]);
         let raw = String(r[ix.amt]||'').replace(/rp/gi,'').replace(/\s/g,'');
         const neg = raw.startsWith('-');
@@ -1425,17 +1459,38 @@ $('importCsvFile').addEventListener('change', e=>{
         const tt = ix.type>=0 ? String(r[ix.type]).trim().toLowerCase() : '';
         const type = ['masuk','pemasukan','income','in','kredit','cr'].includes(tt) ? 'masuk' : (['keluar','pengeluaran','expense','out','debit','db'].includes(tt) || neg ? 'keluar' : null);
         if(!type){ bad++; return; }
-        let account = ix.acc>=0 ? String(r[ix.acc]).trim() : '';
+        let account = ix.acc>=0 ? unq(r[ix.acc]) : '';
         if(!settings.accounts.includes(account)){ account = settings.accounts[0]; unknownAcc++; }
-        const t = { type, desc: (ix.desc>=0 ? String(r[ix.desc]).trim() : '') || '(tanpa keterangan)', amount, account, category: (ix.cat>=0 ? String(r[ix.cat]).trim() : '') || 'Lainnya', date };
+        const t = { type, desc: (ix.desc>=0 ? unq(r[ix.desc]) : '') || '(tanpa keterangan)', amount, account, category: (ix.cat>=0 ? unq(r[ix.cat]) : '') || 'Lainnya', date };
         if(isTransfer(t)) t.transfer = true;
-        if(seen.has(key(t))){ dup++; return; }
-        seen.add(key(t)); fresh.push(t);
+        const oldId = cell(ix.id), oldTr = cell(ix.tr), oldGrp = cell(ix.grp);
+        const hit = pool.get(key(t));
+        if(hit && hit.length){
+          const ex = hit.shift(); dup++;
+          if(oldId) idMap[oldId] = ex.id;
+          if(oldTr && ex.transferId) trMap[oldTr] = ex.transferId;
+          return;
+        }
+        fresh.push({ t, oldId, oldTr, oldGrp });
       });
       if(!fresh.length){ showStatus(`Nggak ada transaksi baru (${dup} duplikat, ${bad} baris tidak valid).`, true); return; }
       if(!(await confirmDialog({ title:'Impor CSV', text:`Tambah ${fresh.length} transaksi baru?\n${dup} duplikat dilewati, ${bad} baris tidak valid.${unknownAcc?`\n${unknownAcc} baris dengan akun tak dikenal dimasukkan ke "${settings.accounts[0]}".`:''}`, ok:'Tambah' }))) return;
       let id = Date.now();
-      fresh.forEach(t=>{ t.id = id++; transactions.push(t); });
+      fresh.forEach(f=>{ f.t.id = id++; if(f.oldId) idMap[f.oldId] = f.t.id; });
+      // Pulihkan ikatan: pasangan pindah saldo (ID Pindah) dan induk alokasi gaji (ID Grup) dari file hasil ekspor aplikasi ini.
+      fresh.forEach(f=>{
+        const t = f.t;
+        if(f.oldTr){ if(!trMap[f.oldTr]) trMap[f.oldTr] = 'tr_' + t.id; t.transferId = trMap[f.oldTr]; t.transfer = true; }
+        if(f.oldGrp && idMap[f.oldGrp] !== undefined) t.allocationGroupId = idMap[f.oldGrp];
+      });
+      // File tanpa kolom ID (ekspor lama / CSV lain): pasangkan sisi keluar dan masuk yang tanggal, nominal, dan kategorinya sama, beda akun.
+      const loose = fresh.map(f=>f.t).filter(t=> t.transfer && !t.transferId);
+      const usedIn = new Set();
+      loose.filter(t=>t.type==='keluar').forEach(o=>{
+        const m = loose.find(i=> i.type==='masuk' && !usedIn.has(i) && i.date===o.date && i.amount===o.amount && i.category===o.category && i.account!==o.account);
+        if(m){ usedIn.add(m); o.transferId = m.transferId = 'tr_' + o.id; }
+      });
+      fresh.forEach(f=> transactions.push(f.t));
       await saveTransactions();
       buildCategoryList(); renderAll();
       showStatus(`${fresh.length} transaksi berhasil diimpor.`, false);
@@ -1462,13 +1517,22 @@ $('importFile').addEventListener('change', e=>{
       const replace = await confirmDialog({ title:'Impor data?', text:`Impor akan mengganti semua data yang ada di perangkat ini dengan isi file (${good.length} catatan${badN?`, ${badN} catatan rusak dilewati`:''}). Kondisi sekarang tetap tersimpan di cadangan lokal.`, ok:'Ganti data', cancel:'Batal' });
       if(!replace) return;
       const usedIds = new Set(); let nid = Date.now();
-      transactions = good.map(t=>{ const c = {...t, amount:Number(t.amount)}; if(c.id===undefined || c.id===null || usedIds.has(c.id)) c.id = nid++; usedIds.add(c.id); return c; });
+      transactions = good.map(t=>{
+        const c = {...t, amount:Number(t.amount)};
+        c.desc = String(c.desc ?? '').trim() || '(tanpa keterangan)';
+        c.category = String(c.category ?? '').trim() || 'Lainnya';
+        if(c.id===undefined || c.id===null || usedIds.has(c.id)) c.id = nid++; usedIds.add(c.id); return c;
+      });
+      // Alamat & token Google Sheets TIDAK diambil dari file (file orang lain bisa mengalihkan salinan datamu). Yang di perangkat ini tetap dipakai.
+      const keepSheetUrl = settings.sheetUrl, keepSheetToken = settings.sheetToken;
       const ds = data.settings;
       settings = { accounts:[...DEFAULT_ACCOUNTS], budgets:{}, savings:{}, savingAccounts:[], initialBalances:{}, salaryAllocations:DEFAULT_ALLOCATIONS.map(a=>({...a})), hiddenCategories: [], lastExportAt: null, ...ds };
       const isObj = o => o && typeof o==='object' && !Array.isArray(o);
       if(!Array.isArray(settings.accounts) || !settings.accounts.length || !settings.accounts.every(a=>typeof a==='string' && a)) settings.accounts = [...DEFAULT_ACCOUNTS];
       ['budgets','savings','initialBalances'].forEach(k=>{ if(!isObj(settings[k])) settings[k] = {}; });
       ['savingAccounts','salaryAllocations','hiddenCategories'].forEach(k=>{ if(!Array.isArray(settings[k])) settings[k] = k==='salaryAllocations' ? [] : []; });
+      if(keepSheetUrl !== undefined) settings.sheetUrl = keepSheetUrl; else delete settings.sheetUrl;
+      if(keepSheetToken !== undefined) settings.sheetToken = keepSheetToken; else delete settings.sheetToken;
       saveTransactions();
       saveSettings();
       rebuildUI();
@@ -1674,7 +1738,10 @@ $('entryForm').addEventListener('submit', async e=>{
   const account = $('account').value;
   const category = $('category').value.trim() || 'Lainnya';
   const date = $('date').value;
-  if(!desc || !amount || !date) return;
+  if(!desc || !amount || !date){
+    showStatus(!desc ? 'Isi keterangan dulu.' : !amount ? 'Jumlah harus lebih dari 0.' : 'Pilih tanggalnya dulu.', true);
+    return;
+  }
 
   // Peringatan saldo minus: pengeluaran baru, atau edit yang membuat saldo akun makin kecil.
   if(currentType==='keluar'){
@@ -1686,7 +1753,7 @@ $('entryForm').addEventListener('submit', async e=>{
     const after = base - amount;
     if(after < 0 && (!old || after < before)){
       const ok = await confirmDialog({ title:'Saldo akan minus', text:`Saldo ${account} ${old ? 'tanpa catatan ini' : 'sekarang'} ${nb(fmtS(base))}. Setelah pengeluaran ${nb(fmt(amount))}, saldonya jadi ${nb(fmtS(after))}. Lanjutkan?`, ok:'Tetap catat', cancel:'Batal' });
-      if(!ok){ openSheet(); return; }
+      if(!ok) return;
     }
   }
 
@@ -1745,6 +1812,7 @@ $('entryForm').addEventListener('submit', async e=>{
 
   $('desc').value=''; $('amount').value=''; $('category').value=''; $('useAlloc').checked = false;
   $('date').value = todayStr();
+  closeSheet();
 });
 
 async function deleteTx(id){
@@ -1809,6 +1877,7 @@ function renderAll(){
   renderTransaksiTab();
   renderAnggaranTab();
   renderDataInfo();
+  if($('profileSheet').classList.contains('open')) renderProfile();
 }
 
 async function renameAccount(oldName, newName){
@@ -2134,12 +2203,11 @@ function renderRecentList(){
     $('searchSummaryR').style.display = 'none';
     $('dayRowR').style.display = 'block';
     syncDayFilter();
-    const selectedCat = $('trendCat').value;
-    let filteredTx = selectedCat ? monthTx.filter(t=> t.category===selectedCat) : monthTx;
+    let filteredTx = monthTx;
     if(dayFilter) filteredTx = filteredTx.filter(t=> Number(t.date.slice(8,10))===dayFilter);
     recent = sortTx(filteredTx.filter(t=>!isTransfer(t)));
-    $('recentEmpty').textContent = 'Belum ada catatan' + (selectedCat ? ` kategori "${selectedCat}"` : '') + (dayFilter ? ` di tanggal ${dayFilter}.` : ' bulan ini.');
-    $('recentTitle').textContent = (dayFilter ? `Catatan tanggal ${dayFilter} ${MONTH_SHORT[(Number(currentMonth.slice(5,7))-1-(startDay()>1&&dayFilter>=startDay()?1:0)+12)%12]}` : 'Catatan bulan ini') + (selectedCat ? ` — ${selectedCat}` : '');
+    $('recentEmpty').textContent = 'Belum ada catatan' + (dayFilter ? ` di tanggal ${dayFilter}.` : ' bulan ini.');
+    $('recentTitle').textContent = (dayFilter ? `Catatan tanggal ${dayFilter} ${MONTH_SHORT[(Number(currentMonth.slice(5,7))-1-(startDay()>1&&dayFilter>=startDay()?1:0)+12)%12]}` : 'Catatan bulan ini');
   }
   $('recentEmpty').style.display = recent.length ? 'none' : 'block';
   $('recentLedger').classList.toggle('grouped', !isAmountSort());
@@ -2237,7 +2305,7 @@ document.body.appendChild($('entryForm'));
 const sheetBg = document.createElement('div'); sheetBg.className='sheet-bg'; document.body.appendChild(sheetBg);
 const fab = document.createElement('button'); fab.type='button'; fab.className='fab'; fab.textContent='+'; fab.setAttribute('aria-label','Tambah catatan'); document.body.appendChild(fab);
 function openSheet(){ $('entryForm').classList.add('open'); sheetBg.classList.add('open'); fab.classList.add('hide'); }
-function closeSheet(){ editingTransferIds = null; $('entryForm').classList.remove('open'); $('transferForm').classList.remove('open'); sheetBg.classList.remove('open'); fab.classList.remove('hide'); }
+function closeSheet(){ editingTransferIds = null; $('profileSheet').classList.remove('open'); $('entryForm').classList.remove('open'); $('transferForm').classList.remove('open'); sheetBg.classList.remove('open'); fab.classList.remove('hide'); }
 fab.addEventListener('click', ()=>{ openSheet(); setTimeout(()=>$('desc').focus(), 260); });
 /* V26: sembunyikan tombol + saat dropdown tanggal dibuka, supaya tidak menutupi pilihan */
 ['dayR','dayT'].forEach(id=>{
@@ -2248,7 +2316,6 @@ fab.addEventListener('click', ()=>{ openSheet(); setTimeout(()=>$('desc').focus(
 });
 
 sheetBg.addEventListener('click', ()=>{ if(editingId) stopEditTx(); else closeSheet(); });
-$('entryForm').addEventListener('submit', closeSheet);
 const _startEdit = startEditTx; startEditTx = function(id){ if(_startEdit(id)) openSheet(); };
 const _stopEdit = stopEditTx; stopEditTx = function(){ _stopEdit(); closeSheet(); };
 function openTransfer(){
@@ -2446,9 +2513,9 @@ const searchState = { T:'', R:'' };
 function searchList(q, key, ids){
   const matched = transactions.filter(t=>
     !isTransfer(t) && (
-      t.desc.toLowerCase().includes(q) ||
-      t.category.toLowerCase().includes(q) ||
-      t.account.toLowerCase().includes(q))
+      String(t.desc||'').toLowerCase().includes(q) ||
+      String(t.category||'').toLowerCase().includes(q) ||
+      String(t.account||'').toLowerCase().includes(q))
   );
   const yms = [...new Set(matched.map(t=>periodOf(t.date)))].sort().reverse();
   if(searchState[key] && !yms.includes(searchState[key])){ searchState[key] = ''; dayFilter = 0; }
@@ -3068,7 +3135,7 @@ if(!auth){
   const CATS=[[/makan|minum|kopi|jajan|nasi|bakso|sate|resto/i,'Makan'],[/transport|bensin|parkir|ojek|grab|gojek|tol|bbm/i,'Transport'],[/internet|wifi|pulsa|paket/i,'Internet'],[/kontrak|sewa|kos\b/i,'Kontrakan'],[/listrik|pln|pdam|air\b|tagihan|cicil/i,'Tagihan'],[/nonton|game|hibur|wisata|liburan/i,'Hiburan'],[/obat|dokter|sehat|apotek/i,'Kesehatan'],[/sekolah|kuliah|buku|kursus/i,'Pendidikan'],[/gaji|bonus|thr|lembur/i,'Gaji'],[/belanja|beli|toko|market/i,'Belanja']];
   function parseAmt(t){
     let m, best=null;
-    const re=/(\d+(?:[.,]\d+)*)\s*(rb|ribu|k|jt|juta)?/gi;
+    const re=/(\d+(?:[.,]\d+)*)(?:\s*(rb|ribu|k|jt|juta)(?![a-z]))?/gi;
     while((m=re.exec(t))){
       let raw=m[1], u=(m[2]||'').toLowerCase(), n;
       if(/^\d{1,3}(\.\d{3})+$/.test(raw) && !u) n=parseInt(raw.replace(/\./g,''),10);
@@ -3080,14 +3147,28 @@ if(!auth){
   function go(){
     const t=inp.value.trim(); if(!t) return;
     const a=parseAmt(t);
-    if(!a||a.n<=0){ showStatus('Nominal belum terbaca. Contoh: kopi 18rb', true); return; }
+    // Angka kecil tanpa satuan (mis. "2" di "beli 2 kopi") dianggap jumlah barang, bukan nominal.
+    if(!a||a.n<=0||(!a.u && a.n<100)){ showStatus('Nominal belum terbaca. Contoh: kopi 18rb', true); return; }
     const type = IN.test(t) ? 'masuk' : 'keluar';
     const tb=document.querySelector('#entryForm .toggle button[data-type="'+type+'"]'); if(tb) tb.click();
     let rest=t.replace(a.str,' ');
     const low=t.toLowerCase();
-    const acc=(settings.accounts||[]).find(n=> low.includes(n.toLowerCase()) || n.toLowerCase().split(/\s+/).some(w=>w.length>=5 && low.includes(w)));
-    if(acc){ const sel=$('account'); if([...sel.options].some(o=>o.value===acc)) sel.value=acc;
-      acc.split(/\s+/).forEach(w=>{ if(w.length>=5) rest=rest.replace(new RegExp(w,'ig'),' '); }); }
+    // Akun dikenali dari nama lengkapnya; kalau tidak ada, dari kata khas nama akun (bukan kata kategori seperti "belanja"). Kata yang dipakai mengenali akun dibuang dari keterangan.
+    const escRe = x=> x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const isCatWord = w=> CATS.some(([r])=>r.test(w)) || DEFAULT_CATEGORIES.some(c=>c.toLowerCase()===w);
+    const accs = settings.accounts||[];
+    let acc = null, strip = [];
+    for(const n of accs){ if(low.includes(n.toLowerCase())){ acc = n; strip = [n]; break; } }
+    if(!acc){
+      for(const n of accs){
+        const ws = n.toLowerCase().split(/\s+/).filter(w=> w.length>=5 && !isCatWord(w) && low.includes(w));
+        if(ws.length){ acc = n; strip = ws; break; }
+      }
+    }
+    if(acc){
+      const sel=$('account'); if([...sel.options].some(o=>o.value===acc)) sel.value=acc;
+      strip.forEach(w=>{ rest = rest.replace(new RegExp(escRe(w),'ig'),' '); });
+    }
     const hit=CATS.find(([r])=>r.test(t));
     $('category').value = hit ? hit[1] : 'Lainnya';
     rest=rest.replace(/\s+/g,' ').trim();
@@ -3302,6 +3383,46 @@ function bapaoSVG(){
   vis(); setS('dance','Halo! Aku Bapao. Ketuk aku ya!'); timer=setTimeout(()=>{ idx=1; run(); }, rnd(18000,28000));
   const _st=saveTransactions; saveTransactions=function(){ const r=_st.apply(this,arguments); try{ window.bapaoCheer(); }catch(e){} return r; };
 })();
+
+/* V47: menu profil */
+function renderProfile(){
+  const email = ($('accountEmail').textContent || '').trim();
+  const nick = ($('nickIn').value || '').trim();
+  const name = nick || (email.includes('@') ? email.split('@')[0] : '') || 'Pengguna';
+  $('pfName').textContent = name;
+  $('pfAv').textContent = Array.from(name)[0].toUpperCase();
+  $('pfMail').textContent = email && email !== '-' ? email : '';
+  const real = transactions.filter(t=>!isTransfer(t));
+  $('pfCount').textContent = real.length.toLocaleString('id-ID');
+  const first = real.reduce((m,t)=> (!m || t.date<m) ? t.date : m, '');
+  $('pfSince').textContent = first ? MONTH_SHORT[Number(first.slice(5,7))-1] + ' ' + first.slice(0,4) : '-';
+  const days = new Set(real.map(t=>t.date));
+  const fd = x=> ymLocal(x) + '-' + String(x.getDate()).padStart(2,'0');
+  const cur = new Date(); if(!days.has(fd(cur))) cur.setDate(cur.getDate()-1);
+  let streak = 0; while(days.has(fd(cur))){ streak++; cur.setDate(cur.getDate()-1); }
+  $('pfStreak').textContent = streak;
+  const b = $('pfBackup');
+  if(!settings.lastExportAt){ b.textContent = 'Belum pernah backup.'; b.style.color = 'var(--expense)'; }
+  else {
+    const d = Math.floor((Date.now() - new Date(settings.lastExportAt).getTime()) / 86400000);
+    b.textContent = d <= 0 ? 'Terakhir backup: hari ini.' : `Terakhir backup: ${d} hari lalu.`;
+    b.style.color = d > 14 ? 'var(--expense)' : 'var(--muted)';
+  }
+  $('pfLogout').style.display = auth ? '' : 'none';
+}
+$('profileBtn').addEventListener('click', ()=>{
+  renderProfile();
+  $('profileSheet').classList.add('open'); sheetBg.classList.add('open'); fab.classList.add('hide');
+});
+$('nickIn').addEventListener('input', renderProfile);
+$('pfExport').addEventListener('click', ()=>{ $('exportBtn').click(); renderProfile(); });
+$('pfLogout').addEventListener('click', async ()=>{
+  const ok = await confirmDialog({ title:'Keluar dari akun?', text:'Data tetap aman di cloud. Kamu perlu masuk lagi untuk membuka Buku Kas.', ok:'Keluar', cancel:'Batal' });
+  if(!ok) return;
+  closeSheet();
+  if(auth) auth.signOut();
+});
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && $('profileSheet').classList.contains('open')) closeSheet(); });
 </script>
 </body>
 </html>
