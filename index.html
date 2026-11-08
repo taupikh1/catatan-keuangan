@@ -541,6 +541,60 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
 @keyframes bpJump{0%{transform:translateY(0)}35%{transform:translateY(-16px) rotate(-5deg)}70%{transform:translateY(0) rotate(3deg)}100%{transform:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
 
+/* V50: jurus elemen (api & petir) */
+.bp-svgbox{isolation:isolate;}
+.fx{position:absolute; inset:0; pointer-events:none; overflow:visible;}
+.fx-fire{--e1:#ffe08a; --e2:#ff7a1a; --e3:#d62828; --hx:0px; --hy:44px;}
+.fx-bolt{--e1:#fff59d; --e2:#4cc9f0; --e3:#4361ee; --hx:6px; --hy:58px;}
+.fx i,.fx b,.fx svg{position:absolute; opacity:0;}
+.bp .f-j{display:none;} .s-j1 .f-j,.s-j2 .f-j,.s-j3 .f-j{display:inline;}
+.s-idle .bp-g{animation:bpBob 2.2s ease-in-out infinite;}
+.bp-armL,.bp-armR{transition:transform .3s;}
+.s-j1 .bp-armL{transform:rotate(92deg);} .s-j1 .bp-armR{transform:rotate(-28deg);}
+.s-j2 .bp-armL{transform:rotate(165deg);} .s-j2 .bp-armR{transform:rotate(-165deg);}
+.s-j3 .bp-armL{transform:rotate(120deg);} .s-j3 .bp-armR{transform:rotate(-120deg);}
+.s-j1 .bp-g,.s-j2 .bp-g,.s-j3 .bp-g{animation:bpCast 1.1s ease-in-out infinite;}
+@keyframes bpCast{0%,100%{transform:translateY(0) scale(1)}30%{transform:translateY(2px) scale(1.05,.95)}60%{transform:translateY(-4px) scale(.98,1.03)}}
+/* lingkaran sihir 3D di kaki */
+.fx-ring{left:50%; bottom:-14px; width:124px; height:124px; margin-left:-62px; border-radius:50%; border:2px solid var(--e1); box-shadow:0 0 14px var(--e2),inset 0 0 14px var(--e2); transform:perspective(220px) rotateX(72deg); z-index:-1;}
+.fx-ring::before{content:''; position:absolute; inset:11px; border-radius:50%; border:2px dashed var(--e2);}
+.fx-ring::after{content:''; position:absolute; inset:30px; border-radius:50%; border:2px solid var(--e1); opacity:.7;}
+.fx.on .fx-ring{opacity:.9; animation:ringSpin 3s linear infinite;}
+@keyframes ringSpin{to{transform:perspective(220px) rotateX(72deg) rotate(360deg)}}
+/* bola energi */
+.fx-orb{left:calc(var(--hx) - 11px); top:calc(var(--hy) - 11px); width:22px; height:22px; border-radius:50%; background:radial-gradient(circle at 35% 30%,#fff 0,var(--e1) 25%,var(--e2) 62%,var(--e3) 100%); box-shadow:0 0 12px var(--e2),0 0 28px var(--e3);}
+.fx-orb::after{content:''; position:absolute; left:60%; top:18%; width:90px; height:64%; border-radius:50%; background:linear-gradient(270deg,transparent,var(--e2)); filter:blur(3px); opacity:0;}
+.fx-fire.j1 .fx-orb{animation:orbShoot 1.5s ease-in;} .fx-fire.j1 .fx-orb::after{animation:trail 1.5s;}
+@keyframes orbShoot{0%{opacity:0;transform:translate(0,0) scale(0)}25%{opacity:1;transform:translate(0,0) scale(1.2)}90%{opacity:1}100%{opacity:0;transform:translate(-64vw,-20px) scale(1.8)}}
+@keyframes trail{0%,25%{opacity:0}32%,100%{opacity:.9}}
+.fx-bolt.j3 .fx-orb{left:calc(50% - 11px); top:54%; animation:orbOrbit 1.3s linear infinite; opacity:1;}
+@keyframes orbOrbit{from{transform:rotate(0) translateX(50px) rotate(0)}to{transform:rotate(360deg) translateX(50px) rotate(-360deg)}}
+/* pilar api */
+.fx-col{left:50%; bottom:2px; width:46px; margin-left:-23px; height:150px; transform-origin:50% 100%; background:linear-gradient(0deg,var(--e3),var(--e2) 35%,var(--e1) 70%,transparent); border-radius:50% 50% 14% 14%/70% 70% 10% 10%; filter:blur(1.2px) drop-shadow(0 0 10px var(--e2)); z-index:-1;}
+.fx-fire.j2 .fx-col{animation:colFire 1.9s ease-out;}
+@keyframes colFire{0%{opacity:0;transform:scaleY(0) scaleX(.6)}20%{opacity:1;transform:scaleY(1) scaleX(1)}40%{transform:scaleY(.9) scaleX(1.15)}60%{transform:scaleY(1.05) scaleX(.95)}100%{opacity:0;transform:scaleY(1.1) scaleX(.5)}}
+/* gelombang kejut */
+.fx-wave{left:50%; bottom:-8px; width:60px; height:60px; margin-left:-30px; border-radius:50%; border:4px solid var(--e2); box-shadow:0 0 16px var(--e1),inset 0 0 12px var(--e1); transform:perspective(220px) rotateX(72deg);}
+.fx-fire.j3 .fx-wave,.fx-bolt.j3 .fx-wave{animation:waveOut 1.6s ease-out;}
+@keyframes waveOut{0%{opacity:0;transform:perspective(220px) rotateX(72deg) scale(.3)}15%{opacity:1}100%{opacity:0;transform:perspective(220px) rotateX(72deg) scale(5)}}
+/* petir */
+.fx-zig{right:calc(100% - var(--hx)); top:calc(var(--hy) - 17px); width:min(320px,72vw); height:34px; fill:none; stroke:#fff; stroke-width:3; stroke-linejoin:round; transform-origin:right center; filter:drop-shadow(0 0 4px var(--e2)) drop-shadow(0 0 10px var(--e3));}
+.fx-bolt.j1 .fx-zig{animation:zig 1s ease-out;}
+@keyframes zig{0%{opacity:0;transform:scaleX(0)}12%{opacity:1;transform:scaleX(1)}28%{opacity:.25}42%{opacity:1}58%{opacity:.3}72%{opacity:1}100%{opacity:0}}
+.fx-vz{left:50%; bottom:2px; width:44px; height:150px; margin-left:-22px; fill:#fff; stroke:var(--e2); stroke-width:2; stroke-linejoin:round; filter:drop-shadow(0 0 6px var(--e2)) drop-shadow(0 0 14px var(--e3)); z-index:-1;}
+.fx-bolt.j2 .fx-vz{animation:vz 1.3s ease-out;}
+@keyframes vz{0%{opacity:0}8%{opacity:1}20%{opacity:.2}32%{opacity:1}50%{opacity:.3}62%{opacity:1}100%{opacity:0}}
+/* percikan */
+.fx-p{left:50%; top:62%; width:var(--s); height:var(--s); border-radius:50%; background:var(--e1); box-shadow:0 0 6px var(--e2);}
+.fx.on .fx-p{animation:pf 1.4s ease-out var(--d) infinite;}
+@keyframes pf{0%{opacity:0;transform:translate(0,0) scale(.4)}15%{opacity:1}100%{opacity:0;transform:translate(var(--x),var(--y)) scale(1)}}
+/* V49: pilihan karakter teman joget */
+.char-row{display:flex; gap:10px; flex-wrap:wrap;}
+.char-opt{display:flex; flex-direction:column; align-items:center; gap:3px; width:84px; padding:8px 4px 7px; border-radius:16px; border:2px solid transparent; background:rgba(var(--w),.06); color:var(--muted); font:inherit; font-size:12px; font-weight:700; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform .15s, background .2s, border-color .2s;}
+.char-opt:active{transform:scale(.95);}
+.char-opt svg{width:54px; height:60px; overflow:visible; pointer-events:none;}
+.char-opt.on{border-color:var(--as); background:rgba(var(--ar),.12); color:var(--ink);}
+.pv .f-dance{display:inline;}
 /* V42: menu tampilan */
 .look-lbl{font-size:12px; color:var(--muted); margin:14px 0 8px; font-weight:600;}
 .mode-seg{display:flex; gap:6px; padding:4px; border-radius:16px; background:rgba(var(--w),.06);}
@@ -959,8 +1013,9 @@ body.hide-money .amount,body.hide-money .month-stats b,body.hide-money .r-extra 
       <div class="mode-seg" id="modeSeg"><button type="button" data-m="dark">Gelap</button><button type="button" data-m="light">Terang</button></div>
       <div class="look-lbl">Warna aksen</div>
       <div class="sw-row" id="lookSw"></div>
-      <div class="look-lbl">Teman joget (Bapao)</div>
-      <div class="mode-seg" id="palSeg"><button type="button" data-v="on">Tampil</button><button type="button" data-v="off">Sembunyi</button></div>
+      <div class="look-lbl">Karakter jurus</div>
+      <div class="char-row" id="charRow"></div>
+      <div class="mode-seg" id="palSeg" style="margin-top:10px;"><button type="button" data-v="on">Tampil</button><button type="button" data-v="off">Sembunyi</button></div>
       <p class="hint-text" style="margin-top:12px;">Pilihan tampilan disimpan di HP ini saja, jadi HP pasangan bisa beda warna.</p>
     </div>
     <details class="card fold">
@@ -3456,6 +3511,7 @@ function bapaoSVG(){
   +'<g class="f f-sleep">'+arc('M36 61q5 5 10 0M54 61q5 5 10 0')+'<ellipse cx="50" cy="70" rx="2.5" ry="3" fill="#c2475a"/><circle class="bp-nb" cx="58" cy="67" r="4" fill="rgba(125,211,252,.55)" stroke="#7dd3fc" stroke-width="1.4"/><text class="bp-z1" x="74" y="34" font-size="13" font-weight="800" font-family="Arial" fill="#8b8ba7">z</text><text class="bp-z2" x="82" y="22" font-size="10" font-weight="800" font-family="Arial" fill="#8b8ba7">Z</text></g>'
   +'<g class="f f-eat">'+arc('M36 61q5-8 10 0M54 61q5-8 10 0')+'<ellipse class="bp-mouth" cx="50" cy="69" rx="5" ry="4.5" '+mouth+'/></g>'
   +'<g class="f f-drink">'+arc('M36 61q5-8 10 0M54 61q5-8 10 0')+'<ellipse cx="50" cy="69" rx="2.6" ry="3.2" fill="#c2475a"/><ellipse class="bp-puff" cx="33" cy="71" rx="6" ry="4" fill="#ff9aa2"/><ellipse class="bp-puff" cx="67" cy="71" rx="6" ry="4" fill="#ff9aa2"/></g>'
+  +'<g class="f f-j">'+arc('M34 55l11 5M66 55l-11 5')+'<circle cx="41" cy="63" r="3.2" fill="'+K+'"/><circle cx="59" cy="63" r="3.2" fill="'+K+'"/><path d="M45 71q5 5 10 0" stroke="'+K+'" stroke-width="2.6" fill="none" stroke-linecap="round"/></g>'
   +'<g class="f f-wake"><circle cx="41" cy="60" r="3.4" fill="'+K+'"/><circle cx="59" cy="60" r="3.4" fill="'+K+'"/><ellipse cx="50" cy="71" rx="5" ry="7" '+mouth+'/></g>'
   // makanan / minuman
   +'<g class="p p-eat"><circle cx="50" cy="80" r="11" fill="#f0b46c" '+st.replace('3"','2.6"')+'/><path d="M40 78q4-7 10-6q7-1 10 6q-2 5-10 4q-8 1-10-4z" fill="#f9a8d4"/><circle cx="50" cy="80" r="3.2" fill="'+B+'" stroke="'+K+'" stroke-width="2"/><path d="M44 76l2 1M55 75l2-1M57 79l2 1" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/><circle class="bp-crumb" cx="40" cy="84" r="1.8" fill="#f0b46c"/><circle class="bp-crumb" cx="60" cy="86" r="1.8" fill="#f0b46c"/></g>'
@@ -3464,36 +3520,86 @@ function bapaoSVG(){
   +'<g class="bp-armL"><ellipse cx="22" cy="68" rx="6.5" ry="10" fill="'+B+'" '+st+'/></g><g class="bp-armR"><ellipse cx="78" cy="68" rx="6.5" ry="10" fill="'+B+'" '+st+'/></g>'
   +'</g></svg>';
 }
+/* V49: karakter chibi anime chubby tanpa wajah (Mochi & Taro) + daftar karakter teman joget */
+function chibiSVG(o){
+  const K='#2b2118', st='stroke="'+K+'" stroke-width="3" stroke-linejoin="round"', sk='#ffe6d5';
+  const star=(x,y,r,f)=>'<path d="M'+x+' '+(y-r)+'Q'+x+' '+y+' '+(x+r)+' '+y+'Q'+x+' '+y+' '+x+' '+(y+r)+'Q'+x+' '+y+' '+(x-r)+' '+y+'Q'+x+' '+y+' '+x+' '+(y-r)+'Z" fill="'+f+'"/>';
+  const z='font-weight="800" font-family="Arial" fill="#8b8ba7"';
+  return '<svg class="bp s-dance" viewBox="0 0 100 112" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="'+o.name+', karakter anime chubby tanpa wajah">'
+  +'<ellipse cx="50" cy="106" rx="24" ry="4.5" fill="rgba(0,0,0,.2)"/>'
+  +'<g class="bp-g">'
+  +'<ellipse class="bp-legL" cx="40" cy="100" rx="8" ry="5.5" fill="'+o.shoe+'" '+st+'/><ellipse class="bp-legR" cx="60" cy="100" rx="8" ry="5.5" fill="'+o.shoe+'" '+st+'/>'
+  +o.back
+  +'<ellipse cx="50" cy="84" rx="21" ry="15" fill="'+o.cloth+'" '+st+'/>'
+  +(o.neck||'')
+  +'<ellipse cx="50" cy="44" rx="31" ry="27" fill="'+sk+'" '+st+'/>'
+  +o.front
+  +'<ellipse cx="30" cy="55" rx="6.5" ry="4" fill="#ffa0b0" opacity=".9"/><ellipse cx="70" cy="55" rx="6.5" ry="4" fill="#ffa0b0" opacity=".9"/>'
+  +o.detail
+  // ekspresi lewat gerak & aksesori (tanpa wajah)
+  +'<g class="f f-j">'+star(88,20,8,'#ffd54a')+star(12,30,6,'#ff9ecb')+star(84,48,4,'#9ae6ff')+'</g>'
+  +'<g class="f f-tired"><path d="M32 61v9M40 62v9M48 62v9" stroke="#7dd3fc" stroke-width="2.4" stroke-linecap="round" fill="none"/><path class="bp-sweat" d="M80 30q-4 7 0 10q4-3 0-10z" fill="#7dd3fc" stroke="'+K+'" stroke-width="1.6"/></g>'
+  +'<g class="f f-sleep"><circle class="bp-nb" cx="57" cy="58" r="4" fill="rgba(125,211,252,.55)" stroke="#7dd3fc" stroke-width="1.4"/><text class="bp-z1" x="78" y="32" font-size="13" '+z+'>z</text><text class="bp-z2" x="86" y="20" font-size="10" '+z+'>Z</text></g>'
+  +'<g class="f f-eat"><path d="M84 24c-4-6-11 0-5 6l5 5 5-5c6-6-1-12-5-6z" fill="#ff6b8b" stroke="'+K+'" stroke-width="1.4"/></g>'
+  +'<g class="f f-drink"><ellipse class="bp-puff" cx="30" cy="55" rx="6.5" ry="4" fill="#ff8aa0"/><ellipse class="bp-puff" cx="70" cy="55" rx="6.5" ry="4" fill="#ff8aa0"/></g>'
+  +'<g class="f f-wake"><rect x="76" y="6" width="7" height="15" rx="3.5" fill="#ff6b6b" stroke="'+K+'" stroke-width="1.6"/><circle cx="79.5" cy="28" r="3.6" fill="#ff6b6b" stroke="'+K+'" stroke-width="1.6"/></g>'
+  // makanan / minuman
+  +'<g class="p p-eat"><circle cx="50" cy="82" r="10" fill="#f0b46c" stroke="'+K+'" stroke-width="2.6"/><path d="M41 80q4-7 9-6q6-1 9 6q-2 5-9 4q-7 1-9-4z" fill="#f9a8d4"/><circle cx="50" cy="82" r="3" fill="#fff6e6" stroke="'+K+'" stroke-width="2"/><circle class="bp-crumb" cx="41" cy="86" r="1.8" fill="#f0b46c"/><circle class="bp-crumb" cx="59" cy="88" r="1.8" fill="#f0b46c"/></g>'
+  +'<g class="p p-drink"><path d="M54 74l3-13" stroke="#ff6b8b" stroke-width="3.2" stroke-linecap="round"/><path d="M40 75h20l-3 20H43z" fill="#d9f2ff" stroke="'+K+'" stroke-width="2.6" stroke-linejoin="round"/><rect x="38" y="72" width="24" height="4.5" rx="2.2" fill="#fff" stroke="'+K+'" stroke-width="2.2"/><circle cx="46" cy="91" r="2.4" fill="'+K+'"/><circle cx="52" cy="92" r="2.4" fill="'+K+'"/><circle cx="49" cy="87" r="2.4" fill="'+K+'"/><circle cx="55" cy="88" r="2.4" fill="'+K+'"/></g>'
+  // lengan (paling depan)
+  +'<g class="bp-armL" style="transform-origin:34px 76px"><ellipse cx="29" cy="86" rx="5.5" ry="9.5" fill="'+o.cloth+'" '+st+'/></g><g class="bp-armR" style="transform-origin:66px 76px"><ellipse cx="71" cy="86" rx="5.5" ry="9.5" fill="'+o.cloth+'" '+st+'/></g>'
+  +'</g></svg>';
+}
+function taroSVG(){
+  const H='#4663d6', K='#2b2118', st='stroke="'+K+'" stroke-width="3" stroke-linejoin="round"';
+  return chibiSVG({name:'Taro', shoe:'#ffffff', cloth:'#ff9f6e',
+    back:'<ellipse cx="50" cy="41" rx="32" ry="28" fill="'+H+'" '+st+'/>',
+    neck:'<ellipse cx="50" cy="71" rx="22" ry="8" fill="#ff9f6e" '+st+'/>',
+    front:'<path d="M18 46Q13 12 36 14L40 3L48 13L56 2L61 14Q87 12 82 46Q76 31 68 34Q62 41 56 32Q50 41 44 32Q38 41 32 34Q24 31 18 46Z" fill="'+H+'" '+st+'/><path d="M28 26q5-6 12-7" stroke="#9db0ff" stroke-width="3" stroke-linecap="round" fill="none"/>',
+    detail:'<path d="M44 76v9M56 76v9" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M40 92q10 5 20 0" stroke="'+K+'" stroke-width="2.2" fill="none" stroke-linecap="round"/>'});
+}
+const BP_CHARS=[{id:'bapao',name:'Bapao',el:'fire',svg:bapaoSVG,moves:[['Bola Api Kukus','Jurus Bola Api Kukus! 🔥'],['Pilar Api Panas','Pilar Api Panas! Hangus semua godaan jajan!'],['Cincin Inferno','Cincin Inferno Bakpao! Hemat tingkat dewa!']]},{id:'taro',name:'Taro',el:'bolt',svg:taroSVG,moves:[['Tombak Petir','Tombak Petir! ⚡ Pengeluaran liar, kena!'],['Sambaran Langit','Sambaran Langit! ⚡ Dompet terlindungi!'],['Badai Listrik','Badai Listrik! Cuan terkumpul! ⚡']]}];
 (function(){
-  const KEY='buku-kas-pal', t0=Date.now();
+  const KEY='buku-kas-pal', CKEY='buku-kas-char', t0=Date.now();
+  let cur=BP_CHARS[0]; try{ cur=BP_CHARS.find(c=>c.id===localStorage.getItem(CKEY))||cur; }catch(e){}
   const wrap=document.createElement('div'); wrap.id='bapao';
-  wrap.innerHTML='<div class="bp-svgbox" id="bpBox" title="Ketuk Bapao!"><div class="bp-bubble" id="bpBubble"></div>'+bapaoSVG()+'</div>';
+  wrap.innerHTML='<div class="bp-svgbox" id="bpBox" title="Ketuk '+cur.name+'!"><div class="bp-bubble" id="bpBubble"></div>'+cur.svg()+'<div class="fx" id="bpFx"></div></div>';
   document.body.appendChild(wrap);
-  const box=$('bpBox'), bub=$('bpBubble'), svg=box.querySelector('svg');
+  const box=$('bpBox'), bub=$('bpBubble'), fx=$('bpFx'); let svg=box.querySelector('svg');
+  function fxHTML(){
+    let ps=''; for(let i=0;i<10;i++){ const a=i*36*Math.PI/180, r=38+(i%3)*16, fire=cur.el==='fire';
+      ps+='<b class="fx-p" style="--x:'+Math.round(fire?(i%5-2)*13:Math.cos(a)*r)+'px;--y:'+Math.round(fire?-45-(i%4)*22:Math.sin(a)*r-10)+'px;--d:'+(i*0.13).toFixed(2)+'s;--s:'+(3+i%3*1.5)+'px"></b>'; }
+    return '<i class="fx-ring"></i><i class="fx-wave"></i><i class="fx-col"></i><svg class="fx-zig" viewBox="0 0 300 34" preserveAspectRatio="none"><polyline points="300,17 270,6 245,27 215,5 185,29 155,8 125,27 95,10 65,25 35,12 0,19"/></svg><svg class="fx-vz" viewBox="0 0 44 150"><polygon points="24,0 36,0 27,52 40,52 10,150 19,72 6,72 22,40 12,40"/></svg><i class="fx-orb"></i>'+ps; }
+  fx.innerHTML=fxHTML(); fx.className='fx fx-'+cur.el;
+  const hello=()=>'Halo! Aku '+cur.name+'. Ketuk aku ya!';
+  function mount(){ svg.insertAdjacentHTML('afterend', cur.svg()); svg.remove(); svg=box.querySelector('svg'); box.title='Ketuk '+cur.name+'!'; fx.innerHTML=fxHTML(); fx.className='fx fx-'+cur.el; }
   const pick=a=>a[Math.floor(Math.random()*a.length)], rnd=(a,b)=>a+Math.random()*(b-a);
   const L={
-    dance:['Joget dulu biar semangat nyatat! 💃','Cuan masuk, joget masuk~','Dompet tenang, aku goyang!','Ayo catat pengeluaran hari ini!','Hemat pangkal kaya, joget pangkal bahagia','Tak dung tak dung, catat dulu baru jajan!','Jangan lupa cek anggaran ya!'],
-    tired:['Huft… capek jogetnya…','Napas dulu bentar ya…','Kakiku pegel nih…'],
+    idle:['Ayo catat pengeluaran hari ini!','Hemat pangkal kaya, tenaga siap meledak','Jangan lupa cek anggaran ya!','Cuan masuk, jurusku siap!'],
+    tired:['Huft… capek berjurus…','Napas dulu bentar ya…','Tenagaku habis nih…'],
     sleep:['Zzz… mimpi gajian tanggal muda…','Zzz… jangan lupa catat… zzz','Zzz… lima ribu di kantong… zzz'],
     wake:['Hoaam… udah seger lagi!','Eh? Aku ketiduran… hehe'],
     eat:['Nyam nyam! Makan dulu biar kuat jaga dompetmu','Enak banget, tapi jajannya jangan kebanyakan ya','Nyam… yang ini jajan yang dicatat, kok!'],
     drink:['Glek glek… seger! Es teh juga tetap dicatat lho','Ahh segerr, minum dulu~','Boba itu bukan kebutuhan pokok, tapi enak 🧋']
   };
-  const cheer=['Mantap! Tercatat. Aku joget dulu 💃','Yeay, satu catatan lagi!','Rajin banget! Hadiahnya joget gratis.','Catatan aman, dompet makin jelas!'];
+  const cheer=['Mantap! Tercatat. Rasakan jurusku! 💥','Yeay, satu catatan lagi!','Rajin banget! Hadiahnya jurus gratis.','Catatan aman, dompet makin jelas!'];
   let st='dance', idx=0, timer=null, bubT=null;
   function say(t,ms){ bub.textContent=t; bub.classList.add('on'); clearTimeout(bubT); bubT=setTimeout(()=>bub.classList.remove('on'),ms||4500); }
-  function setS(s,msg){ st=s; svg.setAttribute('class','bp s-'+s); say(msg||pick(L[s])); }
-  const seq=[()=>['dance',rnd(18000,32000)],()=>['tired',5500],()=>['sleep',rnd(14000,22000)],()=>['wake',3200],()=>[Math.random()<.5?'eat':'drink',9500]];
+  const jx=()=>'j'+(1+Math.floor(Math.random()*3));
+  function setS(s,msg){ st=s; svg.setAttribute('class','bp s-'+s); const j=s[0]==='j';
+    fx.className='fx fx-'+cur.el; void fx.offsetWidth; if(j) fx.classList.add('on',s);
+    say(msg||pick(j?[cur.moves[+s[1]-1][1]]:L[s])); }
+  const seq=[()=>['j1',7500],()=>['j2',7500],()=>['j3',7500],()=>['tired',5500],()=>['sleep',rnd(14000,22000)],()=>['wake',3200],()=>[Math.random()<.5?'eat':'drink',9500]];
   function run(){ clearTimeout(timer); const x=seq[idx%seq.length](); idx++; setS(x[0]); timer=setTimeout(run,x[1]); }
   function poke(){ box.classList.remove('poke'); void box.offsetWidth; box.classList.add('poke'); }
   box.addEventListener('click',()=>{
     poke();
     if(st==='sleep'){ clearTimeout(timer); idx=0; setS('wake','Hah?! Eh… kamu. Ngagetin aja, hehe'); timer=setTimeout(run,2800); }
-    else say(pick(L[st]));
+    else { clearTimeout(timer); idx=3; setS(jx()); timer=setTimeout(run,7500); }
   });
   window.bapaoCheer=function(){
     if(Date.now()-t0<4000 || box.parentNode.style.display==='none') return;
-    clearTimeout(timer); idx=1; setS('dance',pick(cheer)); poke(); timer=setTimeout(run,rnd(15000,25000));
+    clearTimeout(timer); idx=3; setS(jx(),pick(cheer)); poke(); timer=setTimeout(run,rnd(15000,25000));
   };
   const seg=$('palSeg');
   function vis(){ let on=true; try{ on=localStorage.getItem(KEY)!=='off'; }catch(e){} wrap.style.display=on?'flex':'none'; if(seg) seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',(b.dataset.v==='on')===on)); }
@@ -3501,10 +3607,19 @@ function bapaoSVG(){
     const was = wrap.style.display!=='none';
     try{localStorage.setItem(KEY,b.dataset.v);}catch(e){} vis();
     const now = wrap.style.display!=='none';
-    if(now && !was){ clearTimeout(timer); idx=0; setS('dance','Halo lagi! Aku Bapao. Ketuk aku ya!'); timer=setTimeout(run, rnd(15000,25000)); }
+    if(now && !was){ clearTimeout(timer); idx=0; setS('idle','Halo lagi! Aku '+cur.name+'. Ketuk aku ya!'); timer=setTimeout(run, rnd(15000,25000)); }
     else if(!now){ clearTimeout(bubT); bub.classList.remove('on'); }
   }));
-  vis(); setS('dance','Halo! Aku Bapao. Ketuk aku ya!'); timer=setTimeout(()=>{ idx=1; run(); }, rnd(18000,28000));
+  const row=$('charRow');
+  function paintChars(){ if(!row) return; row.innerHTML=BP_CHARS.map(c=>'<button type="button" class="char-opt'+(c.id===cur.id?' on':'')+'" data-id="'+c.id+'" aria-pressed="'+(c.id===cur.id)+'">'+c.svg().replace('class="bp s-dance"','class="bp pv"').replace(/role="img" aria-label="[^"]*"/,'aria-hidden="true"')+'<span>'+c.name+'</span></button>').join(''); }
+  if(row) row.addEventListener('click',e=>{
+    const b=e.target.closest('.char-opt'); if(!b) return;
+    const c=BP_CHARS.find(x=>x.id===b.dataset.id); if(!c) return;
+    cur=c; try{ localStorage.setItem(CKEY,c.id); localStorage.setItem(KEY,'on'); }catch(er){}
+    vis(); mount(); paintChars(); clearTimeout(timer); idx=0; setS('idle',hello()); timer=setTimeout(run, rnd(15000,25000));
+  });
+  paintChars();
+  vis(); setS('idle',hello()); timer=setTimeout(()=>{ idx=0; run(); }, rnd(6000,9000));
   const _st=saveTransactions; saveTransactions=function(){ const r=_st.apply(this,arguments); try{ window.bapaoCheer(); }catch(e){} return r; };
 })();
 
